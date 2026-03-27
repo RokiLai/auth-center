@@ -26,11 +26,11 @@ services:
     networks:
       - auth-net
 
-  auth-bootstrap:
+  auth-service-bootstrap:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    container_name: auth-bootstrap-container
+    container_name: auth-service-bootstrap-container
     depends_on:
       - mysql
       - redis
@@ -49,7 +49,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - auth-bootstrap
+      - auth-service-bootstrap
     networks:
       - auth-net
 
@@ -59,4 +59,3 @@ volumes:
 
 networks:
   auth-net:
-
