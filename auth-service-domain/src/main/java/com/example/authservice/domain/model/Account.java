@@ -1,5 +1,7 @@
 package com.example.authservice.domain.model;
 
+import com.example.authservice.exception.AuthErrorCode;
+import com.roki.exception.BusinessException;
 import io.micrometer.common.util.StringUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,11 +40,15 @@ public class Account {
      * @return
      */
     public static Account register(String username, String rawPassword, String email) {
-        // 参数校验
-        if (StringUtils.isBlank(username)) throw new IllegalArgumentException("用户名不能为空");
-        if (StringUtils.isBlank(rawPassword) || rawPassword.length() < 6)
-            throw new IllegalArgumentException("密码过短");
-        if (!email.contains("@")) throw new IllegalArgumentException("邮箱格式不正确");
+        if (StringUtils.isBlank(username)) {
+            throw new BusinessException(AuthErrorCode.USERNAME_REQUIRED);
+        }
+        if (StringUtils.isBlank(rawPassword) || rawPassword.length() < 6) {
+            throw new BusinessException(AuthErrorCode.PASSWORD_TOO_SHORT);
+        }
+        if (StringUtils.isBlank(email) || !email.contains("@")) {
+            throw new BusinessException(AuthErrorCode.EMAIL_INVALID);
+        }
 
         Account account = new Account();
         account.username = username;

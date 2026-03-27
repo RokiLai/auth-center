@@ -3,8 +3,10 @@ package com.example.authservice.config;
 import com.example.authservice.annotation.PassToken;
 import com.example.authservice.auth.AccountContextHolder;
 import com.example.authservice.auth.AccountInfo;
+import com.example.authservice.exception.AuthErrorCode;
 import com.example.authservice.service.AccountService;
 import com.example.authservice.util.JwtUtil;
+import com.roki.exception.BusinessException;
 
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,12 +54,10 @@ public class JwtInterceptor implements HandlerInterceptor {
             }
         }
 
-        // 获取 token
         String token = request.getHeader("Authorization");
         if (token == null || token.isEmpty()) {
             logger.warn("请求缺少 Token，拒绝访问");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "缺少Token，请先登录");
-            return false;
+            throw new BusinessException(AuthErrorCode.TOKEN_MISSING);
         }
 
         try {
@@ -66,15 +66,13 @@ public class JwtInterceptor implements HandlerInterceptor {
             AccountInfo accountInfo = accountService.getAccountInfo(username);
             if (accountInfo == null || !Objects.equals(accountInfo.getToken(), token)) {
                 logger.warn("Token 已过期");
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token已过期");
-                return false;
+                throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED);
             }
-            request.setAttribute("username", username); // 可选：写入 request 供 Controller 使用
+            request.setAttribute("username", username);
             AccountContextHolder.set(accountInfo);
         } catch (JwtException e) {
             logger.error("Token 验证失败: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token无效");
-            return false;
+            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
         }
 
         return true;

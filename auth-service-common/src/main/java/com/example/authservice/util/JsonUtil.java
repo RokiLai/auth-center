@@ -1,8 +1,10 @@
 package com.example.authservice.util;
 
+import com.example.authservice.exception.AuthErrorCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.roki.exception.BusinessException;
 
 
 public class JsonUtil {
@@ -20,7 +22,7 @@ public class JsonUtil {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("JSON 序列化失败: " + e.getMessage(), e);
+            throw new BusinessException(AuthErrorCode.JSON_PROCESS_ERROR);
         }
     }
 
@@ -31,7 +33,7 @@ public class JsonUtil {
         try {
             return objectMapper.readValue(json, clazz);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("JSON 反序列化失败: " + e.getMessage(), e);
+            throw new BusinessException(AuthErrorCode.JSON_PROCESS_ERROR);
         }
     }
 
@@ -42,7 +44,7 @@ public class JsonUtil {
         try {
             return objectMapper.readValue(json, typeRef);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("JSON 容器反序列化失败: " + e.getMessage(), e);
+            throw new BusinessException(AuthErrorCode.JSON_PROCESS_ERROR);
         }
     }
 
