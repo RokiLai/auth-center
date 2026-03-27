@@ -16,21 +16,21 @@ if errorlevel 1 (
 )
 
 echo ===========================
-echo 2. 停止并移除 auth-api 容器（如果存在）
-REM 尝试停止 auth-api 容器，如果容器不存在或已停止，则忽略错误
-call docker stop auth-api-container >NUL 2>&1
-REM 尝试移除 auth-api 容器，如果容器不存在，则忽略错误
-call docker rm auth-api-container >NUL 2>&1
+echo 2. 停止并移除 auth-bootstrap 容器（如果存在）
+REM 尝试停止 auth-bootstrap 容器，如果容器不存在或已停止，则忽略错误
+call docker stop auth-bootstrap-container >NUL 2>&1
+REM 尝试移除 auth-bootstrap 容器，如果容器不存在，则忽略错误
+call docker rm auth-bootstrap-container >NUL 2>&1
 
 echo ===========================
-echo 3. 重新构建 auth-api 镜像并启动 auth-api 服务
-REM --build 确保构建最新的 auth-api 镜像
+echo 3. 重新构建 auth-bootstrap 镜像并启动 auth-bootstrap 服务
+REM --build 确保构建最新的 auth-bootstrap 镜像
 REM -d 后台运行
-REM auth-api 指定只操作 auth-api 服务
-call docker compose up -d --build auth-api
+REM auth-bootstrap 指定只操作 auth-bootstrap 服务
+call docker compose up -d --build auth-bootstrap
 
 if errorlevel 1 (
-    echo Docker Compose 启动 auth-api 失败，终止部署！
+    echo Docker Compose 启动 auth-bootstrap 失败，终止部署！
     pause
     exit /b 1
 )
