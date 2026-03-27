@@ -5,7 +5,7 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: demo_login
+      MYSQL_DATABASE: auth_service
       MYSQL_USER: roki
       MYSQL_PASSWORD: 123456
     ports:
@@ -13,7 +13,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
-      - login-net
+      - auth-net
 
   redis:
     image: redis:7.2
@@ -24,13 +24,13 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - login-net
+      - auth-net
 
-  login-api:
+  auth-api:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    container_name: login-api-container
+    container_name: auth-api-container
     depends_on:
       - mysql
       - redis
@@ -39,24 +39,24 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: test
     networks:
-      - login-net
+      - auth-net
 
   login-web:
     build:
-      context: ../../vue-login-demo
+      context: ../../vue-auth-service
       dockerfile: Dockerfile
-    container_name: login-web-container
+    container_name: auth-web-container
     ports:
       - "80:80"
     depends_on:
-      - login-api
+      - auth-api
     networks:
-      - login-net
+      - auth-net
 
 volumes:
   mysql-data:
   redis-data:
 
 networks:
-  login-net:
+  auth-net:
 

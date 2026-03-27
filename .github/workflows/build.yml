@@ -2,7 +2,7 @@ name: Build & Test Spring Boot App
 
 on:
   push:
-    branches: [ "main" ]   # 或 "master"，根据你实际分支名
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 

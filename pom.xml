@@ -4,17 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
-    <artifactId>login-demo</artifactId>
+    <artifactId>auth-service</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
 
     <modules>
-        <module>login-api</module>
-        <module>login-service</module>
-        <module>login-domain</module>
-        <module>login-infra</module>
-        <module>login-common</module>
+        <module>auth-api</module>
+        <module>auth-core</module>
+        <module>auth-domain</module>
+        <module>auth-infra</module>
+        <module>auth-common</module>
     </modules>
 
     <!-- 属性集中定义版本 -->
@@ -110,27 +110,27 @@
             <!-- 子模块版本统一管理 -->
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>login-api</artifactId>
+                <artifactId>auth-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>login-domain</artifactId>
+                <artifactId>auth-domain</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>login-service</artifactId>
+                <artifactId>auth-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>login-common</artifactId>
+                <artifactId>auth-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.example</groupId>
-                <artifactId>login-infra</artifactId>
+                <artifactId>auth-infra</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

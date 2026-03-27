@@ -16,21 +16,21 @@ if errorlevel 1 (
 )
 
 echo ===========================
-echo 2. 停止并移除 login-api 容器（如果存在）
-REM 尝试停止 login-api 容器，如果容器不存在或已停止，则忽略错误
-call docker stop login-api-container >NUL 2>&1
-REM 尝试移除 login-api 容器，如果容器不存在，则忽略错误
-call docker rm login-api-container >NUL 2>&1
+echo 2. 停止并移除 auth-api 容器（如果存在）
+REM 尝试停止 auth-api 容器，如果容器不存在或已停止，则忽略错误
+call docker stop auth-api-container >NUL 2>&1
+REM 尝试移除 auth-api 容器，如果容器不存在，则忽略错误
+call docker rm auth-api-container >NUL 2>&1
 
 echo ===========================
-echo 3. 重新构建 login-api 镜像并启动 login-api 服务
-REM --build 确保构建最新的 login-api 镜像
+echo 3. 重新构建 auth-api 镜像并启动 auth-api 服务
+REM --build 确保构建最新的 auth-api 镜像
 REM -d 后台运行
-REM login-api 指定只操作 login-api 服务
-call docker compose up -d --build login-api
+REM auth-api 指定只操作 auth-api 服务
+call docker compose up -d --build auth-api
 
 if errorlevel 1 (
-    echo Docker Compose 启动 login-api 失败，终止部署！
+    echo Docker Compose 启动 auth-api 失败，终止部署！
     pause
     exit /b 1
 )
