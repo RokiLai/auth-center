@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -153,6 +154,24 @@ class AccountAuthFlowTest {
                 .andExpect(jsonPath("$.code").value(40103))
                 .andExpect(jsonPath("$.message").value("Token已过期，请重新登录"));
     }
+
+    @Test
+    void invalidLoginRequestShouldBeRejectedBeforeBusinessLogic() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"","password":""}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(40001))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.anyOf(
+                        org.hamcrest.Matchers.is("用户名不能为空"),
+                        org.hamcrest.Matchers.is("密码不能为空")
+                )));
+
+        verifyNoInteractions(identityAccountRepository);
+    }
+
 
     @Test
     void staleAuthenticatedRequestShouldNotDeleteNewSessionOnLogout() throws Exception {

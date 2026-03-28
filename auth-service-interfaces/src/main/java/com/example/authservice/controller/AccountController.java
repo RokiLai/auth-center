@@ -5,6 +5,7 @@ import com.example.authservice.controller.request.RegisterRequest;
 import com.example.authservice.controller.request.UpdatePasswordRequest;
 import com.example.authservice.service.AccountService;
 import com.roki.exception.result.Result;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,13 +20,13 @@ public class AccountController {
 
     @PassToken
     @PostMapping("/register")
-    public Result<Boolean> register(@RequestBody RegisterRequest request) {
+    public Result<Boolean> register(@Valid @RequestBody RegisterRequest request) {
         accountService.register(request.getUsername(), request.getPassword(), request.getEmail(), null);
         return Result.success(true);
     }
 
     @PostMapping("/update-password")
-    public Result<Boolean> updatePassword(@RequestBody UpdatePasswordRequest request) {
+    public Result<Boolean> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         accountService.updatePassword(request.getOldPassword(), request.getNewPassword());
         return Result.success(true);
     }

@@ -7,6 +7,7 @@ import com.example.authservice.identity.usecase.LoginUseCase;
 import com.example.authservice.identity.usecase.LogoutUseCase;
 import com.example.authservice.service.dto.UserLoginDTO;
 import com.roki.exception.result.Result;
+import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +29,7 @@ public class IdentityController {
 
     @PassToken
     @PostMapping("/login")
-    public Result<UserLoginDTO> login(@RequestBody LoginRequest request,
+    public Result<UserLoginDTO> login(@Valid @RequestBody LoginRequest request,
                                       HttpServletResponse response) {
         LoginResult loginResult = loginUseCase.login(request.getUsername(), request.getPassword());
         UserLoginDTO userLoginDTO = new UserLoginDTO(
