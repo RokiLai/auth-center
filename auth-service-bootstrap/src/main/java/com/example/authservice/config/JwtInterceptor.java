@@ -1,15 +1,13 @@
 package com.example.authservice.config;
 
 import com.example.authservice.annotation.PassToken;
-import com.example.authservice.auth.AccountContextHolder;
-import com.example.authservice.auth.AccountInfo;
-import com.example.authservice.auth.LoginSession;
-import com.example.authservice.domain.service.SessionStore;
+import com.example.authservice.auth.IdentityContext;
+import com.example.authservice.auth.IdentityContextHolder;
+import com.example.authservice.domain.identity.model.CurrentIdentity;
 import com.example.authservice.exception.AuthErrorCode;
-import com.example.authservice.util.JwtUtil;
+import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.roki.exception.BusinessException;
 
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -20,18 +18,13 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.lang.reflect.Method;
-import java.util.Objects;
-
 @Component
 public class JwtInterceptor implements HandlerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtInterceptor.class); // 添加日志记录器
 
     @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private SessionStore sessionStore;
+    private AuthenticateUseCase authenticateUseCase;
 
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -62,32 +55,20 @@ public class JwtInterceptor implements HandlerInterceptor {
         }
 
         try {
-            String sessionId = jwtUtil.parseSessionId(token);
-            if (sessionId == null || sessionId.isBlank()) {
-                logger.warn("Token 缺少会话标识");
-                throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
-            }
+            CurrentIdentity currentIdentity = authenticateUseCase.authenticate(token);
+            IdentityContext identityContext = new IdentityContext();
+            identityContext.setId(currentIdentity.getId());
+            identityContext.setUsername(currentIdentity.getUsername());
+            identityContext.setToken(currentIdentity.getToken());
+            identityContext.setRoles(currentIdentity.getRoles());
+            identityContext.setPermissions(currentIdentity.getPermissions());
 
-            LoginSession loginSession = sessionStore.getBySessionId(sessionId);
-            if (loginSession == null || !Objects.equals(loginSession.getToken(), token)) {
-                logger.warn("Token 已过期");
-                throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED);
-            }
-
-            AccountInfo accountInfo = new AccountInfo();
-            accountInfo.setId(loginSession.getAccountId());
-            accountInfo.setUsername(loginSession.getUsername());
-            accountInfo.setToken(loginSession.getToken());
-            accountInfo.setRole(loginSession.getRoles());
-            accountInfo.setPermissions(loginSession.getPermissions());
-
-            logger.info("Token 验证通过，用户: {}, sessionId: {}", loginSession.getUsername(), sessionId);
-            request.setAttribute("username", loginSession.getUsername());
-            request.setAttribute("sessionId", sessionId);
-            AccountContextHolder.set(accountInfo);
-        } catch (JwtException e) {
-            logger.error("Token 验证失败: {}", e.getMessage());
-            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+            logger.info("Token 验证通过，用户: {}", currentIdentity.getUsername());
+            request.setAttribute("username", currentIdentity.getUsername());
+            IdentityContextHolder.set(identityContext);
+        } catch (BusinessException e) {
+            logger.warn("Token 校验未通过: {}", e.getMessage());
+            throw e;
         }
 
         return true;
@@ -98,6 +79,6 @@ public class JwtInterceptor implements HandlerInterceptor {
                                 HttpServletResponse response,
                                 Object handler,
                                 Exception ex) {
-        AccountContextHolder.clear();
+        IdentityContextHolder.clear();
     }
 }

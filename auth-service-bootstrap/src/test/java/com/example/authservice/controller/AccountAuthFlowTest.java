@@ -1,15 +1,20 @@
 package com.example.authservice.controller;
 
-import com.example.authservice.auth.LoginSession;
 import com.example.authservice.config.JwtInterceptor;
 import com.example.authservice.config.WebConfig;
-import com.example.authservice.domain.model.Account;
-import com.example.authservice.domain.repo.AccountRepo;
+import com.example.authservice.domain.identity.model.IdentityAccount;
+import com.example.authservice.domain.identity.model.IdentitySession;
+import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
+import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.repo.PermissionRepo;
 import com.example.authservice.domain.repo.RolePermissionRepo;
 import com.example.authservice.domain.repo.RoleRepo;
-import com.example.authservice.domain.service.SessionStore;
-import com.example.authservice.service.impl.AccountServiceImpl;
+import com.example.authservice.identity.usecase.impl.AuthenticateUseCaseImpl;
+import com.example.authservice.identity.usecase.impl.LoginUseCaseImpl;
+import com.example.authservice.identity.usecase.impl.LogoutUseCaseImpl;
+import com.example.authservice.infra.identity.service.BcryptCompatiblePasswordHasher;
+import com.example.authservice.infra.identity.service.JwtIdentityTokenProvider;
+import com.example.authservice.service.AccountService;
 import com.example.authservice.util.JwtUtil;
 import com.example.authservice.util.config.JwtProperties;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,10 +57,10 @@ class AccountAuthFlowTest {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private InMemorySessionStore sessionStore;
+    private InMemoryIdentitySessionRepository sessionRepository;
 
     @MockBean
-    private AccountRepo accountRepo;
+    private IdentityAccountRepository identityAccountRepository;
 
     @MockBean
     private RolePermissionRepo rolePermissionRepo;
@@ -66,17 +71,26 @@ class AccountAuthFlowTest {
     @MockBean
     private PermissionRepo permissionRepo;
 
+    @MockBean
+    private AccountService accountService;
+
     @BeforeEach
     void setUp() {
-        sessionStore.clear();
+        sessionRepository.clear();
     }
 
     @Test
     void loginLogoutFlowShouldCreateAndInvalidateSessionBackedToken() throws Exception {
         String username = "tester";
         String password = "123456";
-        Account account = new Account(1L, username, password, "tester@example.com");
-        when(accountRepo.findByUsername(username)).thenReturn(account);
+        IdentityAccount account = new IdentityAccount(
+                1L,
+                username,
+                new com.example.authservice.domain.identity.model.PasswordHash(password),
+                "tester@example.com",
+                null
+        );
+        when(identityAccountRepository.findByUsername(username)).thenReturn(account);
 
         String token = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -96,9 +110,10 @@ class AccountAuthFlowTest {
         String sessionId = jwtUtil.parseSessionId(token);
         assertThat(sessionId).isNotBlank();
         assertThat(jwtUtil.parseUserId(token)).isEqualTo(1L);
-        assertThat(sessionStore.getSessionIdByUserId(1L)).isEqualTo(sessionId);
+        assertThat(sessionRepository.findByAccountId(1L)).isNotNull();
+        assertThat(sessionRepository.findByAccountId(1L).getSessionId()).isEqualTo(sessionId);
 
-        LoginSession loginSession = sessionStore.getBySessionId(sessionId);
+        IdentitySession loginSession = sessionRepository.findBySessionId(sessionId);
         assertThat(loginSession).isNotNull();
         assertThat(loginSession.getAccountId()).isEqualTo(1L);
         assertThat(loginSession.getUsername()).isEqualTo(username);
@@ -110,8 +125,8 @@ class AccountAuthFlowTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(true));
 
-        assertThat(sessionStore.getBySessionId(sessionId)).isNull();
-        assertThat(sessionStore.getSessionIdByUserId(1L)).isNull();
+        assertThat(sessionRepository.findBySessionId(sessionId)).isNull();
+        assertThat(sessionRepository.findByAccountId(1L)).isNull();
 
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", token))
@@ -123,54 +138,58 @@ class AccountAuthFlowTest {
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @Import({
-            AccountController.class,
-            AccountServiceImpl.class,
+            IdentityController.class,
             JwtInterceptor.class,
             WebConfig.class,
             JwtUtil.class,
-            JwtProperties.class
+            JwtProperties.class,
+            JwtIdentityTokenProvider.class,
+            BcryptCompatiblePasswordHasher.class,
+            LoginUseCaseImpl.class,
+            LogoutUseCaseImpl.class,
+            AuthenticateUseCaseImpl.class
     })
     static class TestApplication {
 
         @Bean
-        InMemorySessionStore sessionStore() {
-            return new InMemorySessionStore();
+        InMemoryIdentitySessionRepository identitySessionRepository() {
+            return new InMemoryIdentitySessionRepository();
         }
     }
 
-    static class InMemorySessionStore implements SessionStore {
+    static class InMemoryIdentitySessionRepository implements IdentitySessionRepository {
 
-        private final Map<String, LoginSession> sessions = new ConcurrentHashMap<>();
+        private final Map<String, IdentitySession> sessions = new ConcurrentHashMap<>();
         private final Map<Long, String> userSessions = new ConcurrentHashMap<>();
 
         @Override
-        public void save(LoginSession session) {
+        public void save(IdentitySession session) {
             sessions.put(session.getSessionId(), session);
+            userSessions.put(session.getAccountId(), session.getSessionId());
         }
 
         @Override
-        public LoginSession getBySessionId(String sessionId) {
+        public IdentitySession findBySessionId(String sessionId) {
             return sessions.get(sessionId);
         }
 
         @Override
-        public String getSessionIdByUserId(Long userId) {
-            return userSessions.get(userId);
+        public IdentitySession findByAccountId(Long accountId) {
+            String sessionId = userSessions.get(accountId);
+            if (sessionId == null) {
+                return null;
+            }
+            return sessions.get(sessionId);
         }
 
         @Override
-        public void bindUserSession(Long userId, String sessionId) {
-            userSessions.put(userId, sessionId);
-        }
-
-        @Override
-        public void deleteSession(String sessionId) {
+        public void deleteBySessionId(String sessionId) {
             sessions.remove(sessionId);
         }
 
         @Override
-        public void deleteUserSession(Long userId) {
-            userSessions.remove(userId);
+        public void deleteByAccountId(Long accountId) {
+            userSessions.remove(accountId);
         }
 
         void clear() {

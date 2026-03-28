@@ -2,16 +2,7 @@ package com.example.authservice.service;
 
 import java.util.List;
 
-import com.example.authservice.service.dto.UserLoginDTO;
-
 public interface AccountService {
-    /**
-     * 用户登录
-     * @param username 用户名
-     * @param password 密码
-     * @return 登录结果，包含用户信息
-     */
-    UserLoginDTO login(String username, String password);
     /**
      * 校验用户名和密码是否匹配
      * @param username 用户名
@@ -25,12 +16,6 @@ public interface AccountService {
      * @param newPassword 新密码
      */
     boolean updatePassword(String username, String newPassword);
-
-    /**
-     * 注销当前登录会话
-     * @return 注销结果
-     */
-    boolean logout();
 
     /**
      * 注册用户

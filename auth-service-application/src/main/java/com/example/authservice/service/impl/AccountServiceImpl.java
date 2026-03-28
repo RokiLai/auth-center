@@ -1,20 +1,18 @@
 package com.example.authservice.service.impl;
 
-import com.example.authservice.auth.AccountContextHolder;
-import com.example.authservice.auth.AccountInfo;
-import com.example.authservice.auth.LoginSession;
-import com.example.authservice.domain.repo.*;
-import com.example.authservice.domain.service.SessionStore;
+import com.example.authservice.auth.IdentityContext;
+import com.example.authservice.auth.IdentityContextHolder;
+import com.example.authservice.domain.identity.model.RawPassword;
+import com.example.authservice.domain.identity.model.IdentitySession;
+import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
+import com.example.authservice.domain.identity.service.PasswordHasher;
+import com.example.authservice.domain.repo.AccountRepo;
 import com.example.authservice.exception.AuthErrorCode;
 import com.example.authservice.service.AccountService;
-import com.example.authservice.service.dto.UserLoginDTO;
 import com.example.authservice.domain.model.Account;
-import com.example.authservice.util.JwtUtil;
 import com.roki.exception.BusinessException;
 
 import java.util.List;
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -26,27 +24,17 @@ public class AccountServiceImpl implements AccountService {
     private AccountRepo accountRepo;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private IdentitySessionRepository identitySessionRepository;
 
     @Autowired
-    private SessionStore sessionStore;
-
-    @Autowired
-    private RolePermissionRepo rolePermissionRepo;
-
-    @Autowired
-    private RoleRepo roleRepo;
-
-    private final PermissionRepo permissionRepo;
-
-    public AccountServiceImpl(AccountRepo accountRepo, JwtUtil jwtUtil, SessionStore sessionStore,
-                              RolePermissionRepo rolePermissionRepo, RoleRepo roleRepo, PermissionRepo permissionRepo) {
+    private PasswordHasher passwordHasher;
+    
+    public AccountServiceImpl(AccountRepo accountRepo,
+                              IdentitySessionRepository identitySessionRepository,
+                              PasswordHasher passwordHasher) {
         this.accountRepo = accountRepo;
-        this.jwtUtil = jwtUtil;
-        this.sessionStore = sessionStore;
-        this.rolePermissionRepo = rolePermissionRepo;
-        this.roleRepo = roleRepo;
-        this.permissionRepo = permissionRepo;
+        this.identitySessionRepository = identitySessionRepository;
+        this.passwordHasher = passwordHasher;
     }
 
     @Override
@@ -55,7 +43,7 @@ public class AccountServiceImpl implements AccountService {
         if (account != null) {
             throw new BusinessException(AuthErrorCode.USERNAME_ALREADY_EXISTS);
         }
-        account = Account.register(username, password, email);
+        account = Account.register(username, new RawPassword(password), email, passwordHasher);
         accountRepo.save(account);
 
         if (!CollectionUtils.isEmpty(roleIds)) {
@@ -66,81 +54,28 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public UserLoginDTO login(String username, String password) {
-        Account account = accountRepo.findByUsername(username);
-        if (account == null || !account.matchPassword(password)) {
-            throw new BusinessException(AuthErrorCode.LOGIN_FAILED);
-        }
-
-        String oldSessionId = sessionStore.getSessionIdByUserId(account.getId());
-        if (oldSessionId != null && !oldSessionId.isBlank()) {
-            sessionStore.deleteSession(oldSessionId);
-            sessionStore.deleteUserSession(account.getId());
-        }
-
-        String sessionId = UUID.randomUUID().toString();
-        String token = jwtUtil.generateToken(account.getId(), username, sessionId);
-        UserLoginDTO result = new UserLoginDTO(account.getId(), account.getUsername(), account.getEmail(), token);
-
-        LoginSession loginSession = new LoginSession();
-        loginSession.setSessionId(sessionId);
-        loginSession.setAccountId(account.getId());
-        loginSession.setUsername(account.getUsername());
-        loginSession.setToken(token);
-
-        if (!CollectionUtils.isEmpty(account.getRoleIds())) {
-            List<String> roles = roleRepo.selectCodeByIds(account.getRoleIds());
-            loginSession.setRoles(roles);
-
-            List<Long> permissionIds = rolePermissionRepo.findPermissionIdsByRoleIds(account.getRoleIds());
-            List<String> permissions = permissionRepo.selectCodeByIds(permissionIds);
-            loginSession.setPermissions(permissions);
-        }
-
-        sessionStore.save(loginSession);
-        sessionStore.bindUserSession(account.getId(), sessionId);
-        return result;
-    }
-
-    @Override
     public boolean validatePassword(String username, String password) {
         Account account = accountRepo.findByUsername(username);
-        return account != null && account.matchPassword(password);
+        return account != null && account.matchPassword(new RawPassword(password), passwordHasher);
     }
 
     @Override
     public boolean updatePassword(String oldPassword, String newPassword) {
-        AccountInfo currentAccount = AccountContextHolder.get();
+        IdentityContext currentAccount = IdentityContextHolder.get();
         String username = currentAccount.getUsername();
         Account account = accountRepo.findByUsername(username);
-        if (account == null || !account.matchPassword(oldPassword)) {
+        if (account == null || !account.matchPassword(new RawPassword(oldPassword), passwordHasher)) {
             throw new BusinessException(AuthErrorCode.OLD_PASSWORD_INCORRECT);
         }
-        account.updatePassword(newPassword);
+        account.updatePassword(new RawPassword(newPassword), passwordHasher);
         accountRepo.save(account);
         if (currentAccount.getId() != null) {
-            String sessionId = sessionStore.getSessionIdByUserId(currentAccount.getId());
-            if (sessionId != null && !sessionId.isBlank()) {
-                sessionStore.deleteSession(sessionId);
+            IdentitySession session = identitySessionRepository.findByAccountId(currentAccount.getId());
+            if (session != null && session.getSessionId() != null && !session.getSessionId().isBlank()) {
+                identitySessionRepository.deleteBySessionId(session.getSessionId());
             }
-            sessionStore.deleteUserSession(currentAccount.getId());
+            identitySessionRepository.deleteByAccountId(currentAccount.getId());
         }
         return true;
     }
-
-    @Override
-    public boolean logout() {
-        AccountInfo currentAccount = AccountContextHolder.get();
-        if (currentAccount == null || currentAccount.getId() == null) {
-            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
-        }
-
-        String sessionId = sessionStore.getSessionIdByUserId(currentAccount.getId());
-        if (sessionId != null && !sessionId.isBlank()) {
-            sessionStore.deleteSession(sessionId);
-        }
-        sessionStore.deleteUserSession(currentAccount.getId());
-        return true;
-    }
-
 }

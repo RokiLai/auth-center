@@ -1,6 +1,6 @@
 package com.example.authservice.infra.service;
 
-import com.example.authservice.auth.LoginSession;
+import com.example.authservice.domain.identity.model.IdentitySession;
 import com.example.authservice.infra.reids.RedisUtil;
 import com.example.authservice.util.config.JwtProperties;
 import org.junit.jupiter.api.Test;
@@ -32,12 +32,11 @@ class RedisSessionStoreImplTest {
     void saveAndBindUserSessionShouldUseExpectedRedisKeysAndJwtTtl() {
         when(jwtProperties.getExpire()).thenReturn(3_600_000L);
 
-        LoginSession session = new LoginSession();
+        IdentitySession session = new IdentitySession();
         session.setSessionId("sid-123");
         session.setAccountId(42L);
 
         sessionStore.save(session);
-        sessionStore.bindUserSession(42L, "sid-123");
 
         ArgumentCaptor<Duration> ttlCaptor = ArgumentCaptor.forClass(Duration.class);
         verify(redisUtil).set(org.mockito.ArgumentMatchers.eq("login:session:sid-123"), org.mockito.ArgumentMatchers.same(session), ttlCaptor.capture());
@@ -47,8 +46,8 @@ class RedisSessionStoreImplTest {
 
     @Test
     void deleteOperationsShouldTargetExpectedRedisKeys() {
-        sessionStore.deleteSession("sid-123");
-        sessionStore.deleteUserSession(42L);
+        sessionStore.deleteBySessionId("sid-123");
+        sessionStore.deleteByAccountId(42L);
 
         verify(redisUtil).delete("login:session:sid-123");
         verify(redisUtil).delete("login:user_session:42");
