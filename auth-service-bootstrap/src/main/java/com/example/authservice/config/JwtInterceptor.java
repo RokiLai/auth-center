@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -21,6 +22,7 @@ import java.lang.reflect.Method;
 @Component
 public class JwtInterceptor implements HandlerInterceptor {
 
+    private static final String BEARER_PREFIX = "Bearer ";
     private static final Logger logger = LoggerFactory.getLogger(JwtInterceptor.class); // 添加日志记录器
 
     @Autowired
@@ -48,13 +50,14 @@ public class JwtInterceptor implements HandlerInterceptor {
             }
         }
 
-        String token = request.getHeader("Authorization");
-        if (token == null || token.isEmpty()) {
+        String authorizationHeader = request.getHeader("Authorization");
+        if (!StringUtils.hasText(authorizationHeader)) {
             logger.warn("请求缺少 Token，拒绝访问");
             throw new BusinessException(AuthErrorCode.TOKEN_MISSING);
         }
 
         try {
+            String token = resolveToken(authorizationHeader);
             CurrentIdentity currentIdentity = authenticateUseCase.authenticate(token);
             IdentityContext identityContext = new IdentityContext();
             identityContext.setId(currentIdentity.getId());
@@ -81,5 +84,20 @@ public class JwtInterceptor implements HandlerInterceptor {
                                 Object handler,
                                 Exception ex) {
         IdentityContextHolder.clear();
+    }
+
+    private String resolveToken(String authorizationHeader) {
+        String candidate = authorizationHeader.trim();
+        if (!StringUtils.hasText(candidate)) {
+            throw new BusinessException(AuthErrorCode.TOKEN_MISSING);
+        }
+        if (candidate.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
+            String bearerToken = candidate.substring(BEARER_PREFIX.length()).trim();
+            if (!StringUtils.hasText(bearerToken)) {
+                throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+            }
+            return bearerToken;
+        }
+        return candidate;
     }
 }

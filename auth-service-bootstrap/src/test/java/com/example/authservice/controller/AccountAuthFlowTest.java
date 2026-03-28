@@ -55,6 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class AccountAuthFlowTest {
 
+    private static final String BEARER_PREFIX = "Bearer ";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -115,10 +117,12 @@ class AccountAuthFlowTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.username").value(username))
-                .andExpect(header().exists("Authorization"))
+                .andExpect(header().string("Authorization", org.hamcrest.Matchers.startsWith(BEARER_PREFIX)))
                 .andReturn()
                 .getResponse()
                 .getHeader("Authorization");
+
+        token = bearerToken(token);
 
         assertThat(token).isNotBlank();
 
@@ -135,7 +139,7 @@ class AccountAuthFlowTest {
         assertThat(loginSession.getToken()).isEqualTo(token);
 
         mockMvc.perform(post("/auth/logout")
-                        .header("Authorization", token))
+                        .header("Authorization", BEARER_PREFIX + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data").value(true));
@@ -144,7 +148,7 @@ class AccountAuthFlowTest {
         assertThat(sessionRepository.findByAccountId(1L)).isNull();
 
         mockMvc.perform(post("/auth/logout")
-                        .header("Authorization", token))
+                        .header("Authorization", BEARER_PREFIX + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(40103))
                 .andExpect(jsonPath("$.message").value("Token已过期，请重新登录"));
@@ -173,6 +177,8 @@ class AccountAuthFlowTest {
                 .getResponse()
                 .getHeader("Authorization");
 
+        oldToken = bearerToken(oldToken);
+
         CurrentIdentity staleIdentity = authenticateUseCase.authenticate(oldToken);
 
         String newToken = mockMvc.perform(post("/auth/login")
@@ -184,6 +190,8 @@ class AccountAuthFlowTest {
                 .andReturn()
                 .getResponse()
                 .getHeader("Authorization");
+
+        newToken = bearerToken(newToken);
 
         String oldSessionId = jwtUtil.parseSessionId(oldToken);
         String newSessionId = jwtUtil.parseSessionId(newToken);
@@ -277,5 +285,10 @@ class AccountAuthFlowTest {
             sessions.clear();
             userSessions.clear();
         }
+    }
+
+    private static String bearerToken(String authorizationHeader) {
+        assertThat(authorizationHeader).startsWith(BEARER_PREFIX);
+        return authorizationHeader.substring(BEARER_PREFIX.length());
     }
 }

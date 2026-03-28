@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class IdentityController {
 
+    private static final String BEARER_PREFIX = "Bearer ";
+
     @Autowired
     private LoginUseCase loginUseCase;
 
@@ -35,7 +37,7 @@ public class IdentityController {
                 loginResult.getEmail(),
                 loginResult.getToken()
         );
-        response.setHeader("Authorization", userLoginDTO.getToken());
+        response.setHeader("Authorization", BEARER_PREFIX + userLoginDTO.getToken());
         response.setHeader("Access-Control-Expose-Headers", "Authorization");
         return Result.success(userLoginDTO);
     }
