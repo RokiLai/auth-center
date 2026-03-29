@@ -9,8 +9,7 @@ import com.example.authservice.domain.identity.repository.IdentitySessionReposit
 import com.example.authservice.domain.identity.service.AuthenticationDomainService;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
 import com.example.authservice.domain.identity.service.PasswordHasher;
-import com.example.authservice.exception.AuthErrorCode;
-import com.roki.exception.BusinessException;
+import com.example.authservice.exception.auth.AuthenticationFailedException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -38,7 +37,7 @@ public class AuthenticationDomainServiceImpl implements AuthenticationDomainServ
         // 先确认登录主体存在且密码匹配。
         IdentityAccount account = identityAccountRepository.findByUsername(username);
         if (account == null || !account.matchPassword(new RawPassword(password), passwordHasher)) {
-            throw new BusinessException(AuthErrorCode.LOGIN_FAILED);
+            throw new AuthenticationFailedException();
         }
 
         // 当前实现采用单点登录策略，新登录会替换掉旧会话。

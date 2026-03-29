@@ -3,8 +3,9 @@ package com.example.authservice.domain.model;
 import com.example.authservice.domain.identity.model.valueobject.PasswordHash;
 import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import com.example.authservice.domain.identity.service.PasswordHasher;
-import com.example.authservice.exception.AuthErrorCode;
-import com.roki.exception.BusinessException;
+import com.example.authservice.exception.auth.EmailInvalidException;
+import com.example.authservice.exception.auth.PasswordTooShortException;
+import com.example.authservice.exception.auth.UsernameRequiredException;
 import io.micrometer.common.util.StringUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +34,7 @@ public class Account {
 
     public void updatePassword(RawPassword newPassword, PasswordHasher passwordHasher) {
         if (newPassword == null || StringUtils.isBlank(newPassword.getValue()) || newPassword.getValue().length() < 6) {
-            throw new BusinessException(AuthErrorCode.PASSWORD_TOO_SHORT);
+            throw new PasswordTooShortException();
         }
         this.password = passwordHasher.encode(newPassword).getValue();
     }
@@ -47,13 +48,13 @@ public class Account {
      */
     public static Account register(String username, RawPassword rawPassword, String email, PasswordHasher passwordHasher) {
         if (StringUtils.isBlank(username)) {
-            throw new BusinessException(AuthErrorCode.USERNAME_REQUIRED);
+            throw new UsernameRequiredException();
         }
         if (rawPassword == null || StringUtils.isBlank(rawPassword.getValue()) || rawPassword.getValue().length() < 6) {
-            throw new BusinessException(AuthErrorCode.PASSWORD_TOO_SHORT);
+            throw new PasswordTooShortException();
         }
         if (StringUtils.isBlank(email) || !email.contains("@")) {
-            throw new BusinessException(AuthErrorCode.EMAIL_INVALID);
+            throw new EmailInvalidException();
         }
 
         Account account = new Account();

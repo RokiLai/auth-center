@@ -291,7 +291,7 @@ class AccountAuthFlowTest {
                 .getResponse()
                 .getHeader("Authorization"));
 
-        String tamperedToken = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
+        String tamperedToken = token + "tampered";
 
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", BEARER_PREFIX + tamperedToken))

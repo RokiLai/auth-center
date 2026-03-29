@@ -5,9 +5,9 @@ import com.example.authservice.domain.identity.model.result.CurrentIdentity;
 import com.example.authservice.domain.identity.model.valueobject.TokenClaims;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
-import com.example.authservice.exception.AuthErrorCode;
+import com.example.authservice.exception.auth.TokenExpiredException;
+import com.example.authservice.exception.auth.TokenInvalidException;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
-import com.roki.exception.BusinessException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.stereotype.Service;
 
@@ -29,13 +29,13 @@ public class AuthenticateUseCaseImpl implements AuthenticateUseCase {
             TokenClaims claims = identityTokenProvider.parse(rawToken);
             String sessionId = claims.getSessionId();
             if (sessionId == null || sessionId.isBlank()) {
-                throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+                throw new TokenInvalidException();
             }
 
             IdentitySession session = identitySessionRepository.findBySessionId(sessionId);
             // JWT 合法还不够，必须同时命中当前有效会话，才能认为登录态有效。
             if (session == null || !session.matchesToken(rawToken)) {
-                throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED);
+                throw new TokenExpiredException();
             }
 
             CurrentIdentity identity = new CurrentIdentity();
@@ -47,7 +47,7 @@ public class AuthenticateUseCaseImpl implements AuthenticateUseCase {
             identity.setPermissions(session.getPermissions());
             return identity;
         } catch (JwtException e) {
-            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+            throw new TokenInvalidException();
         }
     }
 }

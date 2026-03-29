@@ -6,10 +6,11 @@ import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.PasswordHasher;
 import com.example.authservice.domain.repo.AccountRepo;
-import com.example.authservice.exception.AuthErrorCode;
+import com.example.authservice.exception.auth.OldPasswordIncorrectException;
+import com.example.authservice.exception.auth.TokenInvalidException;
+import com.example.authservice.exception.auth.UsernameAlreadyExistsException;
 import com.example.authservice.service.AccountService;
 import com.example.authservice.domain.model.Account;
-import com.roki.exception.BusinessException;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,7 +42,7 @@ public class AccountServiceImpl implements AccountService {
     public boolean register(String username, String password, String email, List<Long> roleIds) {
         Account account = accountRepo.findByUsername(username);
         if (account != null) {
-            throw new BusinessException(AuthErrorCode.USERNAME_ALREADY_EXISTS);
+            throw new UsernameAlreadyExistsException();
         }
         account = Account.register(username, new RawPassword(password), email, passwordHasher);
         accountRepo.save(account);
@@ -63,12 +64,12 @@ public class AccountServiceImpl implements AccountService {
     public boolean updatePassword(String oldPassword, String newPassword) {
         IdentityContext currentAccount = IdentityContextHolder.get();
         if (currentAccount == null || currentAccount.getUsername() == null || currentAccount.getSessionId() == null || currentAccount.getSessionId().isBlank()) {
-            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+            throw new TokenInvalidException();
         }
         String username = currentAccount.getUsername();
         Account account = accountRepo.findByUsername(username);
         if (account == null || !account.matchPassword(new RawPassword(oldPassword), passwordHasher)) {
-            throw new BusinessException(AuthErrorCode.OLD_PASSWORD_INCORRECT);
+            throw new OldPasswordIncorrectException();
         }
         account.updatePassword(new RawPassword(newPassword), passwordHasher);
         accountRepo.save(account);

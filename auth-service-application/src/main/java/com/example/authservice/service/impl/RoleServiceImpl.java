@@ -2,8 +2,7 @@ package com.example.authservice.service.impl;
 
 import com.example.authservice.domain.model.Role;
 import com.example.authservice.domain.repo.RoleRepo;
-import com.example.authservice.exception.AuthErrorCode;
-import com.roki.exception.BusinessException;
+import com.example.authservice.exception.auth.RoleAuthorizeParamInvalidException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public void batchAuthorize(Long roleId, Set<Long> permissionIds) {
         if (roleId == null || permissionIds == null) {
-            throw new BusinessException(AuthErrorCode.ROLE_AUTHORIZE_PARAM_INVALID);
+            throw new RoleAuthorizeParamInvalidException();
         }
         Role role = roleRepo.selectById(roleId);
         if (role == null) {

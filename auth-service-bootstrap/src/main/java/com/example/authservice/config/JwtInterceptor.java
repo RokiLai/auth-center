@@ -4,7 +4,8 @@ import com.example.authservice.annotation.PassToken;
 import com.example.authservice.auth.IdentityContext;
 import com.example.authservice.auth.IdentityContextHolder;
 import com.example.authservice.domain.identity.model.result.CurrentIdentity;
-import com.example.authservice.exception.AuthErrorCode;
+import com.example.authservice.exception.auth.TokenInvalidException;
+import com.example.authservice.exception.auth.TokenMissingException;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.roki.exception.BusinessException;
 
@@ -53,7 +54,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         String authorizationHeader = request.getHeader("Authorization");
         if (!StringUtils.hasText(authorizationHeader)) {
             logger.warn("请求缺少 Token，拒绝访问");
-            throw new BusinessException(AuthErrorCode.TOKEN_MISSING);
+            throw new TokenMissingException();
         }
 
         try {
@@ -89,15 +90,15 @@ public class JwtInterceptor implements HandlerInterceptor {
     private String resolveToken(String authorizationHeader) {
         String candidate = authorizationHeader.trim();
         if (!StringUtils.hasText(candidate)) {
-            throw new BusinessException(AuthErrorCode.TOKEN_MISSING);
+            throw new TokenMissingException();
         }
         if (!candidate.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length())) {
-            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+            throw new TokenInvalidException();
         }
 
         String bearerToken = candidate.substring(BEARER_PREFIX.length()).trim();
         if (!StringUtils.hasText(bearerToken)) {
-            throw new BusinessException(AuthErrorCode.TOKEN_INVALID);
+            throw new TokenInvalidException();
         }
         return bearerToken;
     }
