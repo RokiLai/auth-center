@@ -1,4 +1,4 @@
-package com.example.authservice.domain.identity.model.result;
+package com.example.authservice.domain.identity.model.valueobject;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -7,7 +7,7 @@ import com.example.authservice.controller.request.LoginRequest;
 import com.example.authservice.controller.request.RegisterRequest;
 import com.example.authservice.controller.request.UpdatePasswordRequest;
 import com.example.authservice.controller.response.LoginResponse;
-import com.example.authservice.domain.identity.model.result.CurrentIdentity;
+import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.LoginUseCase;
 import com.example.authservice.identity.usecase.LogoutUseCase;
 import com.example.authservice.identity.usecase.RegisterUseCase;

@@ -1,4 +1,4 @@
-package com.example.authservice.domain.identity.model.result;
+package com.example.authservice.identity.query;
 
 import lombok.Data;
 

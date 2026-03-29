@@ -2,7 +2,7 @@ package com.example.authservice.config;
 
 import com.example.authservice.annotation.AuthIdentity;
 import com.example.authservice.exception.auth.TokenInvalidException;
-import com.example.authservice.domain.identity.model.result.CurrentIdentity;
+import com.example.authservice.identity.query.CurrentIdentity;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
