@@ -152,7 +152,7 @@ class AccountAuthFlowTest {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", BEARER_PREFIX + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(40103))
+                .andExpect(jsonPath("$.code").value(44103))
                 .andExpect(jsonPath("$.message").value("Token已过期，请重新登录"));
     }
 
@@ -194,7 +194,7 @@ class AccountAuthFlowTest {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", BEARER_PREFIX + firstToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(40103))
+                .andExpect(jsonPath("$.code").value(44103))
                 .andExpect(jsonPath("$.message").value("Token已过期，请重新登录"));
 
         mockMvc.perform(post("/auth/logout")
@@ -208,7 +208,7 @@ class AccountAuthFlowTest {
     void invalidLoginRequestShouldBeRejectedBeforeBusinessLogic() throws Exception {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                .content("""
                                 {"username":"","password":""}
                                 """))
                 .andExpect(status().isOk())
@@ -225,7 +225,7 @@ class AccountAuthFlowTest {
     void missingTokenShouldBeRejectedByInterceptor() throws Exception {
         mockMvc.perform(post("/auth/logout"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(40102))
+                .andExpect(jsonPath("$.code").value(44102))
                 .andExpect(jsonPath("$.message").value("缺少Token，请先登录"));
     }
 
@@ -234,7 +234,7 @@ class AccountAuthFlowTest {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", BEARER_PREFIX))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(40104))
+                .andExpect(jsonPath("$.code").value(44104))
                 .andExpect(jsonPath("$.message").value("Token无效"));
     }
 
@@ -264,7 +264,7 @@ class AccountAuthFlowTest {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(40104))
+                .andExpect(jsonPath("$.code").value(44104))
                 .andExpect(jsonPath("$.message").value("Token无效"));
     }
 
@@ -296,7 +296,7 @@ class AccountAuthFlowTest {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", BEARER_PREFIX + tamperedToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(40104))
+                .andExpect(jsonPath("$.code").value(44104))
                 .andExpect(jsonPath("$.message").value("Token无效"));
     }
 
