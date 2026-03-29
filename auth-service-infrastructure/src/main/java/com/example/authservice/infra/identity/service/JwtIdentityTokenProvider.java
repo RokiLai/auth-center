@@ -1,6 +1,6 @@
 package com.example.authservice.infra.identity.service;
 
-import com.example.authservice.domain.identity.model.TokenClaims;
+import com.example.authservice.domain.identity.model.valueobject.TokenClaims;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
 import com.example.authservice.util.JwtUtil;
 import org.springframework.stereotype.Component;

@@ -4,9 +4,9 @@ import com.example.authservice.config.JwtInterceptor;
 import com.example.authservice.config.WebConfig;
 import com.example.authservice.auth.IdentityContext;
 import com.example.authservice.auth.IdentityContextHolder;
-import com.example.authservice.domain.identity.model.CurrentIdentity;
-import com.example.authservice.domain.identity.model.IdentityAccount;
-import com.example.authservice.domain.identity.model.IdentitySession;
+import com.example.authservice.domain.identity.model.entity.IdentityAccount;
+import com.example.authservice.domain.identity.model.entity.IdentitySession;
+import com.example.authservice.domain.identity.model.result.CurrentIdentity;
 import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.repo.PermissionRepo;
@@ -14,6 +14,7 @@ import com.example.authservice.domain.repo.RolePermissionRepo;
 import com.example.authservice.domain.repo.RoleRepo;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.example.authservice.identity.usecase.LogoutUseCase;
+import com.example.authservice.identity.service.impl.AuthenticationDomainServiceImpl;
 import com.example.authservice.identity.usecase.impl.AuthenticateUseCaseImpl;
 import com.example.authservice.identity.usecase.impl.LoginUseCaseImpl;
 import com.example.authservice.identity.usecase.impl.LogoutUseCaseImpl;
@@ -104,7 +105,7 @@ class AccountAuthFlowTest {
         IdentityAccount account = new IdentityAccount(
                 1L,
                 username,
-                passwordHasher.encode(new com.example.authservice.domain.identity.model.RawPassword(password)),
+                passwordHasher.encode(new com.example.authservice.domain.identity.model.valueobject.RawPassword(password)),
                 "tester@example.com",
                 null
         );
@@ -162,7 +163,7 @@ class AccountAuthFlowTest {
         IdentityAccount account = new IdentityAccount(
                 1L,
                 username,
-                passwordHasher.encode(new com.example.authservice.domain.identity.model.RawPassword(password)),
+                passwordHasher.encode(new com.example.authservice.domain.identity.model.valueobject.RawPassword(password)),
                 "tester@example.com",
                 null
         );
@@ -244,7 +245,7 @@ class AccountAuthFlowTest {
         IdentityAccount account = new IdentityAccount(
                 1L,
                 username,
-                passwordHasher.encode(new com.example.authservice.domain.identity.model.RawPassword(password)),
+                passwordHasher.encode(new com.example.authservice.domain.identity.model.valueobject.RawPassword(password)),
                 "tester@example.com",
                 null
         );
@@ -274,7 +275,7 @@ class AccountAuthFlowTest {
         IdentityAccount account = new IdentityAccount(
                 1L,
                 username,
-                passwordHasher.encode(new com.example.authservice.domain.identity.model.RawPassword(password)),
+                passwordHasher.encode(new com.example.authservice.domain.identity.model.valueobject.RawPassword(password)),
                 "tester@example.com",
                 null
         );
@@ -307,7 +308,7 @@ class AccountAuthFlowTest {
         IdentityAccount account = new IdentityAccount(
                 1L,
                 username,
-                passwordHasher.encode(new com.example.authservice.domain.identity.model.RawPassword(password)),
+                passwordHasher.encode(new com.example.authservice.domain.identity.model.valueobject.RawPassword(password)),
                 "tester@example.com",
                 null
         );
@@ -375,6 +376,7 @@ class AccountAuthFlowTest {
             JwtProperties.class,
             JwtIdentityTokenProvider.class,
             BcryptPasswordHasher.class,
+            AuthenticationDomainServiceImpl.class,
             LoginUseCaseImpl.class,
             LogoutUseCaseImpl.class,
             AuthenticateUseCaseImpl.class

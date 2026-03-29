@@ -1,6 +1,6 @@
 package com.example.authservice.domain.identity.repository;
 
-import com.example.authservice.domain.identity.model.IdentitySession;
+import com.example.authservice.domain.identity.model.entity.IdentitySession;
 
 public interface IdentitySessionRepository {
 

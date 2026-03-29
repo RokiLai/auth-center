@@ -1,47 +1,36 @@
 package com.example.authservice.identity.usecase.impl;
 
-import com.example.authservice.domain.identity.model.IdentityAccount;
-import com.example.authservice.domain.identity.model.IdentitySession;
-import com.example.authservice.domain.identity.model.RawPassword;
-import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
+import com.example.authservice.domain.identity.model.entity.IdentityAccount;
+import com.example.authservice.domain.identity.model.entity.IdentitySession;
+import com.example.authservice.domain.identity.model.result.AuthenticationResult;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
-import com.example.authservice.domain.identity.service.IdentityTokenProvider;
-import com.example.authservice.domain.identity.service.PasswordHasher;
+import com.example.authservice.domain.identity.service.AuthenticationDomainService;
 import com.example.authservice.domain.repo.PermissionRepo;
 import com.example.authservice.domain.repo.RolePermissionRepo;
 import com.example.authservice.domain.repo.RoleRepo;
-import com.example.authservice.exception.AuthErrorCode;
 import com.example.authservice.identity.dto.LoginResult;
 import com.example.authservice.identity.usecase.LoginUseCase;
-import com.roki.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class LoginUseCaseImpl implements LoginUseCase {
 
-    private final IdentityAccountRepository identityAccountRepository;
+    private final AuthenticationDomainService authenticationDomainService;
     private final IdentitySessionRepository identitySessionRepository;
-    private final IdentityTokenProvider identityTokenProvider;
-    private final PasswordHasher passwordHasher;
     private final RolePermissionRepo rolePermissionRepo;
     private final RoleRepo roleRepo;
     private final PermissionRepo permissionRepo;
 
-    public LoginUseCaseImpl(IdentityAccountRepository identityAccountRepository,
+    public LoginUseCaseImpl(AuthenticationDomainService authenticationDomainService,
                             IdentitySessionRepository identitySessionRepository,
-                            IdentityTokenProvider identityTokenProvider,
-                            PasswordHasher passwordHasher,
                             RolePermissionRepo rolePermissionRepo,
                             RoleRepo roleRepo,
                             PermissionRepo permissionRepo) {
-        this.identityAccountRepository = identityAccountRepository;
+        this.authenticationDomainService = authenticationDomainService;
         this.identitySessionRepository = identitySessionRepository;
-        this.identityTokenProvider = identityTokenProvider;
-        this.passwordHasher = passwordHasher;
         this.rolePermissionRepo = rolePermissionRepo;
         this.roleRepo = roleRepo;
         this.permissionRepo = permissionRepo;
@@ -49,36 +38,21 @@ public class LoginUseCaseImpl implements LoginUseCase {
 
     @Override
     public LoginResult login(String username, String password) {
-        IdentityAccount account = identityAccountRepository.findByUsername(username);
-        if (account == null || !account.matchPassword(new RawPassword(password), passwordHasher)) {
-            throw new BusinessException(AuthErrorCode.LOGIN_FAILED);
-        }
+        // 认证、替换旧会话、创建新会话这些规则已下沉到领域服务。
+        AuthenticationResult authenticationResult = authenticationDomainService.authenticate(username, password);
+        IdentityAccount account = authenticationResult.getAccount();
+        IdentitySession session = authenticationResult.getSession();
 
-        IdentitySession oldSession = identitySessionRepository.findByAccountId(account.getId());
-        if (oldSession != null && oldSession.getSessionId() != null && !oldSession.getSessionId().isBlank()) {
-            identitySessionRepository.deleteBySessionId(oldSession.getSessionId());
-            identitySessionRepository.deleteByAccountId(account.getId());
-        }
-
-        String sessionId = UUID.randomUUID().toString();
-        String token = identityTokenProvider.issue(account.getId(), username, sessionId);
-
-        IdentitySession session = new IdentitySession();
-        session.setSessionId(sessionId);
-        session.setAccountId(account.getId());
-        session.setUsername(account.getUsername());
-        session.setToken(token);
-
+        // 角色和权限在登录时做一次快照，避免每次鉴权都回源查询。
         if (!CollectionUtils.isEmpty(account.getRoleIds())) {
             List<String> roles = roleRepo.selectCodeByIds(account.getRoleIds());
-            session.setRoles(roles);
-
             List<Long> permissionIds = rolePermissionRepo.findPermissionIdsByRoleIds(account.getRoleIds());
             List<String> permissions = permissionRepo.selectCodeByIds(permissionIds);
-            session.setPermissions(permissions);
+            session.grantAuthorities(roles, permissions);
         }
 
+        // 应用层负责持久化会话，并把领域结果转换成接口返回对象。
         identitySessionRepository.save(session);
-        return new LoginResult(account.getId(), account.getUsername(), account.getEmail(), token);
+        return new LoginResult(account.getId(), account.getUsername(), account.getEmail(), session.getToken());
     }
 }

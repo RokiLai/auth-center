@@ -1,14 +1,14 @@
-package com.example.authservice.domain.identity.model;
+package com.example.authservice.domain.identity.model.valueobject;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode
-public class RawPassword {
+public class PasswordHash {
     private final String value;
 
-    public RawPassword(String value) {
+    public PasswordHash(String value) {
         this.value = value;
     }
 }

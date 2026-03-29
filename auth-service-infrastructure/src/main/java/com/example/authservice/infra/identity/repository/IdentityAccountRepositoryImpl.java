@@ -1,7 +1,7 @@
 package com.example.authservice.infra.identity.repository;
 
-import com.example.authservice.domain.identity.model.IdentityAccount;
-import com.example.authservice.domain.identity.model.PasswordHash;
+import com.example.authservice.domain.identity.model.entity.IdentityAccount;
+import com.example.authservice.domain.identity.model.valueobject.PasswordHash;
 import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
 import com.example.authservice.domain.model.Account;
 import com.example.authservice.domain.repo.AccountRepo;

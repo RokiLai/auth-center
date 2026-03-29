@@ -1,8 +1,8 @@
 package com.example.authservice.identity.usecase.impl;
 
-import com.example.authservice.domain.identity.model.CurrentIdentity;
-import com.example.authservice.domain.identity.model.IdentitySession;
-import com.example.authservice.domain.identity.model.TokenClaims;
+import com.example.authservice.domain.identity.model.entity.IdentitySession;
+import com.example.authservice.domain.identity.model.result.CurrentIdentity;
+import com.example.authservice.domain.identity.model.valueobject.TokenClaims;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
 import com.example.authservice.exception.AuthErrorCode;
@@ -10,8 +10,6 @@ import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.roki.exception.BusinessException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 @Service
 public class AuthenticateUseCaseImpl implements AuthenticateUseCase {
@@ -35,7 +33,8 @@ public class AuthenticateUseCaseImpl implements AuthenticateUseCase {
             }
 
             IdentitySession session = identitySessionRepository.findBySessionId(sessionId);
-            if (session == null || !Objects.equals(session.getToken(), rawToken)) {
+            // JWT 合法还不够，必须同时命中当前有效会话，才能认为登录态有效。
+            if (session == null || !session.matchesToken(rawToken)) {
                 throw new BusinessException(AuthErrorCode.TOKEN_EXPIRED);
             }
 

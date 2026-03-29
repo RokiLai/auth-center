@@ -3,7 +3,7 @@ package com.example.authservice.config;
 import com.example.authservice.annotation.PassToken;
 import com.example.authservice.auth.IdentityContext;
 import com.example.authservice.auth.IdentityContextHolder;
-import com.example.authservice.domain.identity.model.CurrentIdentity;
+import com.example.authservice.domain.identity.model.result.CurrentIdentity;
 import com.example.authservice.exception.AuthErrorCode;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.roki.exception.BusinessException;

@@ -1,6 +1,6 @@
 package com.example.authservice.domain.identity.service;
 
-import com.example.authservice.domain.identity.model.TokenClaims;
+import com.example.authservice.domain.identity.model.valueobject.TokenClaims;
 
 public interface IdentityTokenProvider {
 

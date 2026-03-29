@@ -2,7 +2,7 @@ package com.example.authservice.service.impl;
 
 import com.example.authservice.auth.IdentityContext;
 import com.example.authservice.auth.IdentityContextHolder;
-import com.example.authservice.domain.identity.model.RawPassword;
+import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.PasswordHasher;
 import com.example.authservice.domain.repo.AccountRepo;

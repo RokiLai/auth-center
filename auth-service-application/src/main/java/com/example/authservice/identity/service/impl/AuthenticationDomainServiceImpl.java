@@ -1,0 +1,57 @@
+package com.example.authservice.identity.service.impl;
+
+import com.example.authservice.domain.identity.model.entity.IdentityAccount;
+import com.example.authservice.domain.identity.model.entity.IdentitySession;
+import com.example.authservice.domain.identity.model.result.AuthenticationResult;
+import com.example.authservice.domain.identity.model.valueobject.RawPassword;
+import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
+import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
+import com.example.authservice.domain.identity.service.AuthenticationDomainService;
+import com.example.authservice.domain.identity.service.IdentityTokenProvider;
+import com.example.authservice.domain.identity.service.PasswordHasher;
+import com.example.authservice.exception.AuthErrorCode;
+import com.roki.exception.BusinessException;
+import org.springframework.stereotype.Service;
+
+import java.util.UUID;
+
+@Service
+public class AuthenticationDomainServiceImpl implements AuthenticationDomainService {
+
+    private final IdentityAccountRepository identityAccountRepository;
+    private final IdentitySessionRepository identitySessionRepository;
+    private final IdentityTokenProvider identityTokenProvider;
+    private final PasswordHasher passwordHasher;
+
+    public AuthenticationDomainServiceImpl(IdentityAccountRepository identityAccountRepository,
+                                           IdentitySessionRepository identitySessionRepository,
+                                           IdentityTokenProvider identityTokenProvider,
+                                           PasswordHasher passwordHasher) {
+        this.identityAccountRepository = identityAccountRepository;
+        this.identitySessionRepository = identitySessionRepository;
+        this.identityTokenProvider = identityTokenProvider;
+        this.passwordHasher = passwordHasher;
+    }
+
+    @Override
+    public AuthenticationResult authenticate(String username, String password) {
+        // 先确认登录主体存在且密码匹配。
+        IdentityAccount account = identityAccountRepository.findByUsername(username);
+        if (account == null || !account.matchPassword(new RawPassword(password), passwordHasher)) {
+            throw new BusinessException(AuthErrorCode.LOGIN_FAILED);
+        }
+
+        // 当前实现采用单点登录策略，新登录会替换掉旧会话。
+        IdentitySession oldSession = identitySessionRepository.findByAccountId(account.getId());
+        if (oldSession != null && oldSession.getSessionId() != null && !oldSession.getSessionId().isBlank()) {
+            identitySessionRepository.deleteBySessionId(oldSession.getSessionId());
+            identitySessionRepository.deleteByAccountId(account.getId());
+        }
+
+        // 认证成功后生成新的会话标识和 token，并组装会话实体。
+        String sessionId = UUID.randomUUID().toString();
+        String token = identityTokenProvider.issue(account.getId(), username, sessionId);
+        IdentitySession session = IdentitySession.createFor(account, sessionId, token);
+        return new AuthenticationResult(account, session);
+    }
+}

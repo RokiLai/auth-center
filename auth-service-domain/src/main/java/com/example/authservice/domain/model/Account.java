@@ -1,6 +1,7 @@
 package com.example.authservice.domain.model;
 
-import com.example.authservice.domain.identity.model.RawPassword;
+import com.example.authservice.domain.identity.model.valueobject.PasswordHash;
+import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import com.example.authservice.domain.identity.service.PasswordHasher;
 import com.example.authservice.exception.AuthErrorCode;
 import com.roki.exception.BusinessException;
@@ -27,7 +28,7 @@ public class Account {
     }
 
     public boolean matchPassword(RawPassword rawPassword, PasswordHasher passwordHasher) {
-        return rawPassword != null && passwordHasher.matches(rawPassword, new com.example.authservice.domain.identity.model.PasswordHash(password));
+        return rawPassword != null && passwordHasher.matches(rawPassword, new PasswordHash(password));
     }
 
     public void updatePassword(RawPassword newPassword, PasswordHasher passwordHasher) {

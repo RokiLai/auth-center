@@ -1,7 +1,7 @@
 package com.example.authservice.infra.identity.service;
 
-import com.example.authservice.domain.identity.model.PasswordHash;
-import com.example.authservice.domain.identity.model.RawPassword;
+import com.example.authservice.domain.identity.model.valueobject.PasswordHash;
+import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
