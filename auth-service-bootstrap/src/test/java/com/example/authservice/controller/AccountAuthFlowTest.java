@@ -6,15 +6,14 @@ import com.example.authservice.auth.IdentityContext;
 import com.example.authservice.auth.IdentityContextHolder;
 import com.example.authservice.domain.identity.model.entity.IdentityAccount;
 import com.example.authservice.domain.identity.model.entity.IdentitySession;
+import com.example.authservice.domain.identity.model.result.AuthorizationSnapshot;
 import com.example.authservice.domain.identity.model.result.CurrentIdentity;
 import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
-import com.example.authservice.domain.repo.PermissionRepo;
-import com.example.authservice.domain.repo.RolePermissionRepo;
-import com.example.authservice.domain.repo.RoleRepo;
+import com.example.authservice.domain.identity.service.impl.AuthenticationDomainServiceImpl;
+import com.example.authservice.domain.identity.service.AuthorizationSnapshotProvider;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.example.authservice.identity.usecase.LogoutUseCase;
-import com.example.authservice.identity.service.impl.AuthenticationDomainServiceImpl;
 import com.example.authservice.identity.usecase.impl.AuthenticateUseCaseImpl;
 import com.example.authservice.identity.usecase.impl.LoginUseCaseImpl;
 import com.example.authservice.identity.usecase.impl.LogoutUseCaseImpl;
@@ -84,13 +83,7 @@ class AccountAuthFlowTest {
     private IdentityAccountRepository identityAccountRepository;
 
     @MockBean
-    private RolePermissionRepo rolePermissionRepo;
-
-    @MockBean
-    private RoleRepo roleRepo;
-
-    @MockBean
-    private PermissionRepo permissionRepo;
+    private AuthorizationSnapshotProvider authorizationSnapshotProvider;
 
     @MockBean
     private AccountService accountService;

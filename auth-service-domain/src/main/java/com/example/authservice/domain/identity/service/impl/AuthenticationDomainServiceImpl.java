@@ -1,4 +1,4 @@
-package com.example.authservice.identity.service.impl;
+package com.example.authservice.domain.identity.service.impl;
 
 import com.example.authservice.domain.identity.model.entity.IdentityAccount;
 import com.example.authservice.domain.identity.model.entity.IdentitySession;
