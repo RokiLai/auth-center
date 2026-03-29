@@ -1,6 +1,6 @@
 package com.example.authservice.application.context;
 
-import com.example.authservice.domain.identity.model.result.CurrentIdentity;
+import com.example.authservice.identity.query.CurrentIdentity;
 
 import java.util.List;
 

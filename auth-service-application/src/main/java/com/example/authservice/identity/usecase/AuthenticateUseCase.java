@@ -1,6 +1,6 @@
 package com.example.authservice.identity.usecase;
 
-import com.example.authservice.domain.identity.model.result.CurrentIdentity;
+import com.example.authservice.identity.query.CurrentIdentity;
 
 public interface AuthenticateUseCase {
 

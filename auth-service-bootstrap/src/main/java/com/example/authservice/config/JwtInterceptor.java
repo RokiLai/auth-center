@@ -1,9 +1,9 @@
 package com.example.authservice.config;
 
 import com.example.authservice.annotation.PassToken;
-import com.example.authservice.domain.identity.model.result.CurrentIdentity;
 import com.example.authservice.exception.auth.TokenInvalidException;
 import com.example.authservice.exception.auth.TokenMissingException;
+import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.roki.exception.exception.BusinessException;
 
@@ -18,6 +18,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.lang.reflect.Method;
+
 @Component
 public class JwtInterceptor implements HandlerInterceptor {
 

@@ -2,7 +2,7 @@ package com.example.authservice.domain.identity.service.impl;
 
 import com.example.authservice.domain.identity.model.entity.IdentityAccount;
 import com.example.authservice.domain.identity.model.entity.IdentitySession;
-import com.example.authservice.domain.identity.model.result.AuthenticationResult;
+import com.example.authservice.domain.identity.model.context.AuthenticatedIdentity;
 import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
@@ -33,7 +33,7 @@ public class AuthenticationDomainServiceImpl implements AuthenticationDomainServ
     }
 
     @Override
-    public AuthenticationResult authenticate(String username, String password) {
+    public AuthenticatedIdentity authenticate(String username, String password) {
         // 先确认登录主体存在且密码匹配。
         IdentityAccount account = identityAccountRepository.findByUsername(username);
         if (account == null || !account.matchPassword(new RawPassword(password), passwordHasher)) {
@@ -51,6 +51,6 @@ public class AuthenticationDomainServiceImpl implements AuthenticationDomainServ
         String sessionId = UUID.randomUUID().toString();
         String token = identityTokenProvider.issue(account.getId(), username, sessionId);
         IdentitySession session = IdentitySession.createFor(account, sessionId, token);
-        return new AuthenticationResult(account, session);
+        return new AuthenticatedIdentity(account, session);
     }
 }

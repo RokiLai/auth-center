@@ -1,12 +1,12 @@
 package com.example.authservice.identity.usecase.impl;
 
 import com.example.authservice.domain.identity.model.entity.IdentitySession;
-import com.example.authservice.domain.identity.model.result.CurrentIdentity;
 import com.example.authservice.domain.identity.model.valueobject.TokenClaims;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
 import com.example.authservice.exception.auth.TokenExpiredException;
 import com.example.authservice.exception.auth.TokenInvalidException;
+import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import io.jsonwebtoken.JwtException;
 import org.springframework.stereotype.Service;
