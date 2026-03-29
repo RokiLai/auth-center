@@ -1,0 +1,113 @@
+name: Commit Message Check
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  commit-message-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          header_pattern='^(build|feat|fix|refactor|test|docs|chore): .+'
+          body_pattern='^  [0-9]+\. .+'
+
+          validate_commit_message() {
+            local commit_sha="$1"
+            local message
+            local subject
+            local body
+            local second_line
+            local non_empty_body
+            local line_no=3
+            local expected_index=1
+
+            message="$(git log --format=%B -n 1 "$commit_sha")"
+            subject="$(printf '%s\n' "$message" | sed -n '1p')"
+            second_line="$(printf '%s\n' "$message" | sed -n '2p')"
+            body="$(printf '%s\n' "$message" | sed -n '3,$p')"
+            non_empty_body="$(printf '%s\n' "$body" | sed '/^[[:space:]]*$/d')"
+
+            if ! printf '%s\n' "$subject" | grep -Eq "$header_pattern"; then
+              echo "::error::Commit $commit_sha 的标题不符合规范：$subject"
+              echo "要求：type: subject"
+              return 1
+            fi
+
+            if [[ -n "$second_line" ]]; then
+              echo "::error::Commit $commit_sha 的第二行必须为空行。"
+              return 1
+            fi
+
+            if [[ -z "$non_empty_body" ]]; then
+              echo "::error::Commit $commit_sha 的正文不能为空，且必须使用编号列表。"
+              return 1
+            fi
+
+            while IFS= read -r line; do
+              if [[ -z "$line" ]]; then
+                echo "::error::Commit $commit_sha 的正文不允许出现空行，问题行号：$line_no"
+                return 1
+              fi
+
+              if ! printf '%s\n' "$line" | grep -Eq "$body_pattern"; then
+                echo "::error::Commit $commit_sha 的正文格式不正确，问题行号：$line_no，要求格式：  1. 变更说明"
+                return 1
+              fi
+
+              current_index="$(printf '%s\n' "$line" | sed -E 's/^  ([0-9]+)\..*/\1/')"
+              if [[ "$current_index" -ne "$expected_index" ]]; then
+                echo "::error::Commit $commit_sha 的正文编号必须从 1 开始并连续递增，问题行号：$line_no，期望编号：$expected_index，实际编号：$current_index"
+                return 1
+              fi
+
+              line_no=$((line_no + 1))
+              expected_index=$((expected_index + 1))
+            done <<< "$body"
+          }
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+            mapfile -t commits < <(git rev-list --no-merges "${base_sha}..${head_sha}")
+          else
+            before_sha="${{ github.event.before }}"
+            after_sha="${{ github.sha }}"
+            if [[ "$before_sha" == "0000000000000000000000000000000000000000" ]]; then
+              mapfile -t commits < <(git rev-list --no-merges "$after_sha" --not --all)
+              if [[ "${#commits[@]}" -eq 0 ]]; then
+                mapfile -t commits < <(git rev-list --no-merges "$after_sha" -n 1)
+              fi
+            else
+              mapfile -t commits < <(git rev-list --no-merges "${before_sha}..${after_sha}")
+            fi
+          fi
+
+          if [[ "${#commits[@]}" -eq 0 ]]; then
+            echo "没有需要校验的 commit。"
+            exit 0
+          fi
+
+          printf '待校验 commit:\n%s\n' "${commits[*]}"
+
+          for commit in "${commits[@]}"; do
+            validate_commit_message "$commit"
+          done
+
+          echo "所有 commit message 校验通过。"
