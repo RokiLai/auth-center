@@ -7,9 +7,9 @@ import com.example.authservice.domain.identity.model.context.AuthenticatedIdenti
 import com.example.authservice.domain.identity.model.valueobject.AuthorizationSnapshot;
 import com.example.authservice.domain.identity.model.valueobject.RawPassword;
 import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
+import com.example.authservice.domain.identity.repository.IdentityAuthorizationRepository;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.AuthenticationDomainService;
-import com.example.authservice.domain.identity.service.AuthorizationSnapshotProvider;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
 import com.example.authservice.domain.identity.service.PasswordHasher;
 import com.example.authservice.exception.auth.AuthenticationFailedException;
@@ -26,20 +26,20 @@ public class AuthenticationDomainServiceImpl implements AuthenticationDomainServ
     private final IdentityTokenProvider identityTokenProvider;
     private final PasswordHasher passwordHasher;
     private final IdentitySessionFactory identitySessionFactory;
-    private final AuthorizationSnapshotProvider authorizationSnapshotProvider;
+    private final IdentityAuthorizationRepository identityAuthorizationRepository;
 
     public AuthenticationDomainServiceImpl(IdentityAccountRepository identityAccountRepository,
                                            IdentitySessionRepository identitySessionRepository,
                                            IdentityTokenProvider identityTokenProvider,
                                            PasswordHasher passwordHasher,
                                            IdentitySessionFactory identitySessionFactory,
-                                           AuthorizationSnapshotProvider authorizationSnapshotProvider) {
+                                           IdentityAuthorizationRepository identityAuthorizationRepository) {
         this.identityAccountRepository = identityAccountRepository;
         this.identitySessionRepository = identitySessionRepository;
         this.identityTokenProvider = identityTokenProvider;
         this.passwordHasher = passwordHasher;
         this.identitySessionFactory = identitySessionFactory;
-        this.authorizationSnapshotProvider = authorizationSnapshotProvider;
+        this.identityAuthorizationRepository = identityAuthorizationRepository;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class AuthenticationDomainServiceImpl implements AuthenticationDomainServ
         // 授权快照属于登录成功后附着到会话上的领域规则，不应由应用层回填。
         // Attaching the authorization snapshot to the session is part of the login domain rule, not application-layer orchestration.
         if (!CollectionUtils.isEmpty(account.getRoleIds())) {
-            AuthorizationSnapshot snapshot = authorizationSnapshotProvider.loadByRoleIds(account.getRoleIds());
+            AuthorizationSnapshot snapshot = identityAuthorizationRepository.loadSnapshotByRoleIds(account.getRoleIds());
             session.grantAuthorities(snapshot.roles(), snapshot.permissions());
         }
 

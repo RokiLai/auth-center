@@ -37,8 +37,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        // 注册当前身份参数解析器，使控制器可以直接声明 @AuthIdentity CurrentIdentity。
-        // Registers the identity argument resolver so controllers can declare @AuthIdentity CurrentIdentity directly.
+        // 注册当前身份参数解析器，使控制器可以直接声明 @AuthIdentity CurrentOperator。
+        // Registers the identity argument resolver so controllers can declare @AuthIdentity CurrentOperator directly.
         resolvers.add(currentIdentityArgumentResolver);
     }
 

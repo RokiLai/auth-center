@@ -7,7 +7,6 @@ import com.example.authservice.controller.request.LoginRequest;
 import com.example.authservice.controller.request.RegisterRequest;
 import com.example.authservice.controller.request.UpdatePasswordRequest;
 import com.example.authservice.controller.response.LoginResponse;
-import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.LoginUseCase;
 import com.example.authservice.identity.usecase.LogoutUseCase;
 import com.example.authservice.identity.usecase.RegisterUseCase;
@@ -75,19 +74,17 @@ public class IdentityController {
     @PostMapping("/logout")
     // 当前登录身份由接口层注入，再显式传入应用用例。
     // The current authenticated identity is injected at the interface layer and then passed explicitly to the use case.
-    public Result<Boolean> logout(@AuthIdentity CurrentIdentity currentIdentity) {
-        // 控制器只负责把接口层身份对象转换成应用层命令对象。
-        // The controller only translates the interface-layer identity into an application command object.
-        return Result.success(logoutUseCase.logout(new LogoutCommand(CurrentOperator.from(currentIdentity))));
+    public Result<Boolean> logout(@AuthIdentity CurrentOperator currentOperator) {
+        return Result.success(logoutUseCase.logout(new LogoutCommand(currentOperator)));
     }
 
     @PostMapping("/update-password")
     // 改密属于身份能力，由 identity 控制器承接认证上下文并转给应用用例。
     // Password updates belong to the identity capability, so the identity controller maps authenticated context into the use case command.
     public Result<Boolean> updatePassword(@Valid @RequestBody UpdatePasswordRequest request,
-                                          @AuthIdentity CurrentIdentity currentIdentity) {
+                                          @AuthIdentity CurrentOperator currentOperator) {
         updatePasswordUseCase.updatePassword(new UpdatePasswordCommand(
-                CurrentOperator.from(currentIdentity),
+                currentOperator,
                 request.oldPassword(),
                 request.newPassword()
         ));

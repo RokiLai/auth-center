@@ -1,8 +1,8 @@
 package com.example.authservice.config;
 
+import com.example.authservice.application.context.CurrentOperator;
 import com.example.authservice.annotation.AuthIdentity;
 import com.example.authservice.exception.auth.TokenInvalidException;
-import com.example.authservice.identity.query.CurrentIdentity;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -17,10 +17,10 @@ public class CurrentIdentityArgumentResolver implements HandlerMethodArgumentRes
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        // 只解析显式声明了 @AuthIdentity 的 CurrentIdentity 参数，避免误注入。
-        // Resolves only explicitly annotated CurrentIdentity parameters to avoid accidental injection.
+        // 只解析显式声明了 @AuthIdentity 的 CurrentOperator 参数，避免误注入。
+        // Resolves only explicitly annotated CurrentOperator parameters to avoid accidental injection.
         return parameter.hasParameterAnnotation(AuthIdentity.class)
-                && CurrentIdentity.class.isAssignableFrom(parameter.getParameterType());
+                && CurrentOperator.class.isAssignableFrom(parameter.getParameterType());
     }
 
     @Override
@@ -35,7 +35,7 @@ public class CurrentIdentityArgumentResolver implements HandlerMethodArgumentRes
             throw new TokenInvalidException();
         }
         Object currentIdentity = request.getAttribute(JwtInterceptor.CURRENT_IDENTITY_ATTR);
-        if (!(currentIdentity instanceof CurrentIdentity)) {
+        if (!(currentIdentity instanceof CurrentOperator)) {
             throw new TokenInvalidException();
         }
         return currentIdentity;

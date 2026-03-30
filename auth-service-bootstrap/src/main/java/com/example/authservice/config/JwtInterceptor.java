@@ -1,9 +1,9 @@
 package com.example.authservice.config;
 
+import com.example.authservice.application.context.CurrentOperator;
 import com.example.authservice.annotation.PassToken;
 import com.example.authservice.exception.auth.TokenInvalidException;
 import com.example.authservice.exception.auth.TokenMissingException;
-import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.roki.exception.exception.BusinessException;
 
@@ -63,7 +63,7 @@ public class JwtInterceptor implements HandlerInterceptor {
 
         try {
             String token = resolveToken(authorizationHeader);
-            CurrentIdentity currentIdentity = authenticateUseCase.authenticate(token);
+            CurrentOperator currentIdentity = authenticateUseCase.authenticate(token);
             logger.info("Token 验证通过，用户: {}", currentIdentity.username());
             // 接口层通过 request attribute 传递当前身份，避免应用层依赖 ThreadLocal。
             // Passes identity through request attributes so upper layers no longer depend on ThreadLocal.

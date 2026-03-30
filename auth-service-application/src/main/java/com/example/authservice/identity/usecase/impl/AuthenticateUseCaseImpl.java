@@ -1,12 +1,12 @@
 package com.example.authservice.identity.usecase.impl;
 
+import com.example.authservice.application.context.CurrentOperator;
 import com.example.authservice.domain.identity.model.entity.IdentitySession;
 import com.example.authservice.domain.identity.model.valueobject.TokenClaims;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.IdentityTokenProvider;
 import com.example.authservice.exception.auth.TokenExpiredException;
 import com.example.authservice.exception.auth.TokenInvalidException;
-import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import io.jsonwebtoken.JwtException;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ public class AuthenticateUseCaseImpl implements AuthenticateUseCase {
     }
 
     @Override
-    public CurrentIdentity authenticate(String rawToken) {
+    public CurrentOperator authenticate(String rawToken) {
         try {
             TokenClaims claims = identityTokenProvider.parse(rawToken);
             String sessionId = claims.sessionId();
@@ -38,7 +38,7 @@ public class AuthenticateUseCaseImpl implements AuthenticateUseCase {
                 throw new TokenExpiredException();
             }
 
-            return new CurrentIdentity(
+            return new CurrentOperator(
                     session.getAccountId(),
                     session.getUsername(),
                     session.getSessionId(),

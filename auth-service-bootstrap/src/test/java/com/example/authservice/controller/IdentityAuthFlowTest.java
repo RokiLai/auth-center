@@ -10,10 +10,9 @@ import com.example.authservice.domain.identity.model.entity.IdentitySession;
 import com.example.authservice.domain.identity.model.entity.IdentitySessionFactory;
 import com.example.authservice.domain.identity.model.valueobject.AuthorizationSnapshot;
 import com.example.authservice.domain.identity.repository.IdentityAccountRepository;
+import com.example.authservice.domain.identity.repository.IdentityAuthorizationRepository;
 import com.example.authservice.domain.identity.repository.IdentitySessionRepository;
 import com.example.authservice.domain.identity.service.impl.AuthenticationDomainServiceImpl;
-import com.example.authservice.domain.identity.service.AuthorizationSnapshotProvider;
-import com.example.authservice.identity.query.CurrentIdentity;
 import com.example.authservice.identity.usecase.AuthenticateUseCase;
 import com.example.authservice.identity.usecase.LogoutUseCase;
 import com.example.authservice.identity.usecase.RegisterUseCase;
@@ -91,7 +90,7 @@ class IdentityAuthFlowTest {
     private IdentityAccountRepository identityAccountRepository;
 
     @MockBean
-    private AuthorizationSnapshotProvider authorizationSnapshotProvider;
+    private IdentityAuthorizationRepository identityAuthorizationRepository;
 
     @MockBean
     private RegisterUseCase registerUseCase;
@@ -332,7 +331,7 @@ class IdentityAuthFlowTest {
 
         oldToken = bearerToken(oldToken);
 
-        CurrentIdentity staleIdentity = authenticateUseCase.authenticate(oldToken);
+        CurrentOperator staleIdentity = authenticateUseCase.authenticate(oldToken);
 
         String newToken = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -353,7 +352,7 @@ class IdentityAuthFlowTest {
         assertThat(sessionRepository.findBySessionId(oldSessionId)).isNull();
         assertThat(sessionRepository.findBySessionId(newSessionId)).isNotNull();
 
-        assertThat(logoutUseCase.logout(new LogoutCommand(CurrentOperator.from(staleIdentity)))).isTrue();
+        assertThat(logoutUseCase.logout(new LogoutCommand(staleIdentity))).isTrue();
 
         assertThat(sessionRepository.findBySessionId(newSessionId)).isNotNull();
         assertThat(sessionRepository.findSessionIdByAccountId(1L)).isEqualTo(newSessionId);
