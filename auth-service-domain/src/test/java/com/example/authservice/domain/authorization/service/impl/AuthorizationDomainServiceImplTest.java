@@ -1,4 +1,4 @@
-package com.example.authservice.authorization.service.impl;
+package com.example.authservice.domain.authorization.service.impl;
 
 import com.example.authservice.domain.authorization.model.Permission;
 import com.example.authservice.domain.authorization.model.Role;
