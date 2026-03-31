@@ -11,6 +11,7 @@ import com.example.authcenter.domain.identity.model.entity.IdentitySessionFactor
 import com.example.authcenter.domain.identity.repository.IdentityAccountRepository;
 import com.example.authcenter.domain.identity.repository.IdentitySessionRepository;
 import com.example.authcenter.domain.identity.service.impl.AuthenticationDomainServiceImpl;
+import com.example.authcenter.domain.identity.service.impl.SessionDomainServiceImpl;
 import com.example.authcenter.identity.usecase.AuthenticateUseCase;
 import com.example.authcenter.identity.usecase.LogoutUseCase;
 import com.example.authcenter.identity.usecase.RegisterUseCase;
@@ -364,6 +365,7 @@ class IdentityAuthFlowTest {
             IdentityAccountFactory.class,
             IdentitySessionFactory.class,
             AuthenticationDomainServiceImpl.class,
+            SessionDomainServiceImpl.class,
             LoginUseCaseImpl.class,
             LogoutUseCaseImpl.class,
             AuthenticateUseCaseImpl.class,

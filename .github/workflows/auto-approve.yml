@@ -1,0 +1,46 @@
+name: Auto Approve PR
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - master
+      - main
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'dev'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Approve pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          existing_review_id="$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+            --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "APPROVED") | .id' \
+            | head -n 1 || true)"
+
+          if [[ -n "${existing_review_id}" ]]; then
+            echo "PR #${PR_NUMBER} 已存在 github-actions[bot] 的批准记录，跳过。"
+            exit 0
+          fi
+
+          gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
+            -f event='APPROVE' \
+            -f body='自动批准：来自同仓库 dev 分支的 PR。'
