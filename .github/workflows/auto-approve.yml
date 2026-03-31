@@ -12,6 +12,7 @@ on:
       - main
 
 permissions:
+  contents: write
   pull-requests: write
 
 jobs:
@@ -44,3 +45,26 @@ jobs:
           gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}/reviews" \
             -f event='APPROVE' \
             -f body='自动批准：来自同仓库 dev 分支的 PR。'
+
+      - name: Enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          auto_merge_enabled="$(gh pr view "${PR_NUMBER}" \
+            --repo "${REPOSITORY}" \
+            --json autoMergeRequest \
+            --jq '.autoMergeRequest != null')"
+
+          if [[ "${auto_merge_enabled}" == "true" ]]; then
+            echo "PR #${PR_NUMBER} 已启用自动合并，跳过。"
+            exit 0
+          fi
+
+          gh pr merge "${PR_NUMBER}" \
+            --repo "${REPOSITORY}" \
+            --auto \
+            --merge
