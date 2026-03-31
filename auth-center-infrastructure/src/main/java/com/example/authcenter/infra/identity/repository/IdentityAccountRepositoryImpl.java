@@ -21,6 +21,11 @@ public class IdentityAccountRepositoryImpl implements IdentityAccountRepository 
     }
 
     @Override
+    public boolean existsByUsername(String username) {
+        return accountMapper.findByUsername(username) != null;
+    }
+
+    @Override
     public IdentityAccount findByUsername(String username) {
         AccountPO account = accountMapper.findByUsername(username);
         if (account == null) {

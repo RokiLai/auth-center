@@ -1,48 +1,40 @@
-package com.example.authcenter.identity.usecase;
+package com.example.authcenter.domain.identity.service.impl;
 
-import com.example.authcenter.application.context.CurrentOperator;
+import com.example.authcenter.domain.identity.model.context.PasswordChangeDecision;
 import com.example.authcenter.domain.identity.model.entity.IdentityAccount;
 import com.example.authcenter.domain.identity.model.entity.IdentityAccountFactory;
+import com.example.authcenter.domain.identity.model.valueobject.PasswordHash;
 import com.example.authcenter.domain.identity.model.valueobject.RawPassword;
 import com.example.authcenter.domain.identity.repository.IdentityAccountRepository;
 import com.example.authcenter.domain.identity.repository.IdentitySessionRepository;
+import com.example.authcenter.domain.identity.service.CredentialDomainService;
 import com.example.authcenter.domain.identity.service.PasswordHasher;
-import com.example.authcenter.domain.identity.service.impl.CredentialDomainServiceImpl;
 import com.example.authcenter.exception.auth.OldPasswordIncorrectException;
-import com.example.authcenter.identity.usecase.command.UpdatePasswordCommand;
-import com.example.authcenter.identity.usecase.impl.UpdatePasswordUseCaseImpl;
-import com.example.authcenter.infra.identity.service.BcryptPasswordHasher;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(
-        classes = UpdatePasswordUseCaseImplTest.TestApplication.class,
+        classes = CredentialDomainServiceImplTest.TestApplication.class,
         properties = {
                 "roki.exception.error-code.project-code=10",
                 "roki.exception.error-code.default-biz-code=01",
                 "roki.exception.error-code.biz-codes.auth=01"
         }
 )
-@ActiveProfiles("test")
-class UpdatePasswordUseCaseImplTest {
+class CredentialDomainServiceImplTest {
 
     @Autowired
-    private UpdatePasswordUseCase updatePasswordUseCase;
+    private CredentialDomainService credentialDomainService;
 
     @Autowired
     private PasswordHasher passwordHasher;
@@ -56,13 +48,8 @@ class UpdatePasswordUseCaseImplTest {
     @MockBean
     private IdentitySessionRepository identitySessionRepository;
 
-    @AfterEach
-    void tearDown() {
-        reset(identityAccountRepository, identitySessionRepository);
-    }
-
     @Test
-    void updatePasswordShouldPersistNewHashAndInvalidateCurrentSession() {
+    void changePasswordShouldReturnRevocationPlanForCurrentSession() {
         IdentityAccount account = identityAccountFactory.restore(
                 1L,
                 "tester",
@@ -72,21 +59,21 @@ class UpdatePasswordUseCaseImplTest {
         when(identityAccountRepository.findByUsername("tester")).thenReturn(account);
         when(identitySessionRepository.findSessionIdByAccountId(1L)).thenReturn("session-1");
 
-        boolean updated = updatePasswordUseCase.updatePassword(new UpdatePasswordCommand(
-                new CurrentOperator(1L, "tester", "session-1", null),
+        PasswordChangeDecision decision = credentialDomainService.changePassword(
+                1L,
+                "tester",
+                "session-1",
                 "123456",
                 "654321"
-        ));
+        );
 
-        assertThat(updated).isTrue();
-        assertThat(account.matchPassword(new RawPassword("654321"), passwordHasher)).isTrue();
-        verify(identityAccountRepository).save(account);
-        verify(identitySessionRepository).deleteBySessionId("session-1");
-        verify(identitySessionRepository).deleteByAccountId(1L);
+        assertThat(decision.account().matchPassword(new RawPassword("654321"), passwordHasher)).isTrue();
+        assertThat(decision.sessionRevocationPlan().sessionIdToDelete()).isEqualTo("session-1");
+        assertThat(decision.sessionRevocationPlan().accountIdBindingToDelete()).isEqualTo(1L);
     }
 
     @Test
-    void updatePasswordShouldRejectWrongOldPassword() {
+    void changePasswordShouldRejectWrongOldPassword() {
         IdentityAccount account = identityAccountFactory.restore(
                 1L,
                 "tester",
@@ -95,23 +82,37 @@ class UpdatePasswordUseCaseImplTest {
         );
         when(identityAccountRepository.findByUsername("tester")).thenReturn(account);
 
-        assertThatThrownBy(() -> updatePasswordUseCase.updatePassword(new UpdatePasswordCommand(
-                new CurrentOperator(1L, "tester", "session-1", null),
+        assertThatThrownBy(() -> credentialDomainService.changePassword(
+                1L,
+                "tester",
+                "session-1",
                 "wrong-password",
                 "654321"
-        ))).isInstanceOf(OldPasswordIncorrectException.class);
-
-        verifyNoMoreInteractions(identitySessionRepository);
+        )).isInstanceOf(OldPasswordIncorrectException.class);
     }
 
     @SpringBootConfiguration
     @EnableAutoConfiguration
     @Import({
-            UpdatePasswordUseCaseImpl.class,
-            IdentityAccountFactory.class,
-            BcryptPasswordHasher.class,
-            CredentialDomainServiceImpl.class
+            CredentialDomainServiceImpl.class,
+            IdentityAccountFactory.class
     })
     static class TestApplication {
+        @Bean
+        PasswordHasher passwordHasher() {
+            return new TestPasswordHasher();
+        }
+    }
+
+    private static class TestPasswordHasher implements PasswordHasher {
+        @Override
+        public PasswordHash encode(RawPassword rawPassword) {
+            return new PasswordHash("encoded:" + rawPassword.value());
+        }
+
+        @Override
+        public boolean matches(RawPassword rawPassword, PasswordHash passwordHash) {
+            return ("encoded:" + rawPassword.value()).equals(passwordHash.value());
+        }
     }
 }
