@@ -229,6 +229,43 @@ Controller entrypoints:
 - [`auth-center-interfaces/src/main/java/com/example/authcenter/controller/IdentityController.java`](./auth-center-interfaces/src/main/java/com/example/authcenter/controller/IdentityController.java)
 - [`auth-center-interfaces/src/main/java/com/example/authcenter/controller/ConsulConfigDebugController.java`](./auth-center-interfaces/src/main/java/com/example/authcenter/controller/ConsulConfigDebugController.java)
 
+### OpenAPI / Swagger
+
+After the application starts, you can access:
+
+- Swagger UI: `/swagger-ui.html`
+- OpenAPI JSON: `/v3/api-docs`
+
+Typical local URLs:
+
+- `http://localhost:8080/swagger-ui.html`
+- `http://localhost:8080/v3/api-docs`
+
+Swagger UI is configured to:
+
+- sort tags and operations alphabetically
+- collapse operations by default
+- display request duration
+- persist Bearer authorization between page refreshes
+
+Authentication flow:
+
+- call `POST /auth/login` first
+- read `Authorization: Bearer <token>` from the response header
+- paste the full header value into the Swagger UI `Authorize` dialog, or send it manually in later requests
+
+Common error codes:
+
+- `1001001`: username already exists
+- `1001005`: old password is incorrect
+- `1001101`: invalid username or password
+- `1001102`: token is missing
+- `1001103`: token has expired
+- `1001104`: token is invalid
+- `9001101`: request validation failed
+
+The generated OpenAPI document includes request/response models, error response shapes, and documented response headers for direct debugging in Swagger UI.
+
 Main endpoints:
 
 ### Register

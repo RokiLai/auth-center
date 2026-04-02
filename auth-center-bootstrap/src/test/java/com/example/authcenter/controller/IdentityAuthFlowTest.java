@@ -1,6 +1,7 @@
 package com.example.authcenter.controller;
 
 import com.example.authcenter.application.context.CurrentOperator;
+import com.example.authcenter.config.openapi.OpenApiConfig;
 import com.example.authcenter.config.web.CurrentOperatorArgumentResolver;
 import com.example.authcenter.config.web.JwtInterceptor;
 import com.example.authcenter.config.web.WebConfig;
@@ -45,8 +46,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -231,6 +234,31 @@ class IdentityAuthFlowTest {
     }
 
     @Test
+    void openApiJsonShouldBeAccessibleWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.info.title").value("Auth Center API"))
+                .andExpect(jsonPath("$.paths['/auth/login']").exists())
+                .andExpect(jsonPath("$.paths['/auth/logout']").exists())
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.components.schemas.ApiErrorResponse").exists())
+                .andExpect(jsonPath("$.components.schemas.LoginResultResponse").exists())
+                .andExpect(jsonPath("$.paths['/auth/logout'].post.responses['401']").exists())
+                .andExpect(jsonPath("$.paths['/auth/login'].post.responses['200'].headers.Authorization").exists())
+                .andExpect(jsonPath("$.components.schemas.RegisterRequest.properties.password.minLength").value(6))
+                .andExpect(jsonPath("$.components.schemas.RegisterRequest.properties.email.format").value("email"))
+                .andExpect(jsonPath("$.components.schemas.UpdatePasswordRequest.properties.newPassword.minLength").value(6));
+    }
+
+    @Test
+    void swaggerUiShouldBeAccessibleWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Swagger UI")));
+    }
+
+    @Test
     void emptyBearerTokenShouldBeRejectedAsInvalid() throws Exception {
         mockMvc.perform(post("/auth/logout")
                         .header("Authorization", BEARER_PREFIX))
@@ -355,6 +383,8 @@ class IdentityAuthFlowTest {
     @EnableAutoConfiguration
     @Import({
             IdentityController.class,
+            ConsulConfigDebugController.class,
+            OpenApiConfig.class,
             JwtInterceptor.class,
             CurrentOperatorArgumentResolver.class,
             WebConfig.class,

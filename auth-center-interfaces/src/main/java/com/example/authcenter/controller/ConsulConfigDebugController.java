@@ -1,5 +1,7 @@
 package com.example.authcenter.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.core.env.Environment;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 @RefreshScope
 @RestController
+@Tag(name = "Debug", description = "配置调试接口")
 @RequestMapping("/debug/config")
 public class ConsulConfigDebugController {
 
@@ -25,6 +28,7 @@ public class ConsulConfigDebugController {
     }
 
     @GetMapping("/consul")
+    @Operation(summary = "查看当前配置快照", description = "返回当前实例加载到的部分 Consul 配置，仅用于调试。")
     public Map<String, Object> consul() {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("applicationName", environment.getProperty("spring.application.name"));
