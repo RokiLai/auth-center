@@ -3,12 +3,14 @@ package com.example.authcenter.config.consul;
 import com.ecwid.consul.v1.agent.model.NewService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.consul.discovery.ConsulDiscoveryProperties;
 import org.springframework.cloud.consul.serviceregistry.ConsulAutoRegistration;
 import org.springframework.cloud.consul.serviceregistry.ConsulRegistration;
 import org.springframework.cloud.consul.serviceregistry.ConsulServiceRegistry;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,12 +25,46 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "app.consul.rpc-registration", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ConsulRpcRegistrationConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(ConsulRpcRegistrationConfiguration.class);
+
     @Bean
     public SmartLifecycle consulRpcRegistrationLifecycle(ConsulServiceRegistry serviceRegistry,
                                                          ConsulDiscoveryProperties discoveryProperties,
                                                          ApplicationContext applicationContext,
                                                          Environment environment) {
         return new ConsulRpcRegistrationLifecycle(serviceRegistry, discoveryProperties, applicationContext, environment);
+    }
+
+    @Bean
+    public ApplicationListener<ApplicationReadyEvent> consulRegistrationSummaryListener(
+            ConsulDiscoveryProperties discoveryProperties,
+            Environment environment
+    ) {
+        return event -> {
+            String httpServiceName = environment.getProperty(
+                    "spring.cloud.consul.discovery.service-name",
+                    environment.getProperty("spring.application.name", "application") + "-http"
+            );
+            int httpPort = environment.getProperty("server.port", Integer.class, 8080);
+            String httpAddress = discoveryProperties.getHostname();
+
+            boolean rpcEnabled = environment.getProperty(
+                    "app.consul.rpc-registration.enabled",
+                    Boolean.class,
+                    true
+            );
+            String rpcServiceName = environment.getProperty(
+                    "app.consul.rpc-registration.service-name",
+                    environment.getProperty("spring.application.name", "application") + "-rpc"
+            );
+            int rpcPort = environment.getProperty("grpc.server.port", Integer.class, 9090);
+
+            log.info(
+                    "Consul registration summary: http[name={}, address={}, port={}], rpc[enabled={}, name={}, address={}, port={}]",
+                    httpServiceName, httpAddress, httpPort,
+                    rpcEnabled, rpcServiceName, httpAddress, rpcPort
+            );
+        };
     }
 
     static class ConsulRpcRegistrationLifecycle implements SmartLifecycle {
