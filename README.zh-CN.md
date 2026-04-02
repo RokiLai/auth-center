@@ -76,21 +76,18 @@
 
 该 profile 会：
 
-- 使用 `8081` 暴露 HTTP 服务
 - 开启 Consul Config 和 Consul Discovery
-- 通过 Consul 做配置读取和后端服务发现，但不注册当前服务实例
-- 开启 MySQL 和 Redis 的后端服务发现
-- 使用 `9090` 暴露 gRPC 服务
+- 启动时只要求本地提供 Consul 连接信息
+- MySQL 和 Redis 地址通过服务发现获取
+- 账号密码、JWT、端口等业务配置从 Consul Config 读取
+- 不注册当前服务实例
 
 仓库中的默认值包括：
 
 - `CONSUL_HOST=192.168.31.169`
 - `CONSUL_PORT=8500`
-- `HOST_IP=192.168.31.50`
-- `MYSQL_SERVICE_NAME=mysql-proxy-service`
-- `MYSQL_DATABASE=auth`
-- `REDIS_SERVICE_NAME=redis-proxy-service`
-- `GRPC_SERVER_PORT=9090`
+
+当前会固定从 Consul KV 路径 `config/data` 读取 YAML 配置。
 
 ### `test`
 
@@ -112,28 +109,14 @@
 
 - 开启 Consul Config 和 Consul Discovery
 - 将容器实例注册到 Consul
-- 通过 Consul 发现 MySQL 和 Redis，并覆盖直连地址配置
-- 使用 `8080` 暴露 HTTP 服务
-- 使用 `9090` 暴露 gRPC 服务
+- 启动时只要求本地提供 Consul 连接信息
+- MySQL 和 Redis 地址通过服务发现获取
+- 账号密码、JWT、端口等业务配置从 Consul Config 读取
 
 关键环境变量：
 
 - `CONSUL_HOST`
 - `CONSUL_PORT`
-- `HOST_IP`
-- `MYSQL_HOST`
-- `MYSQL_PORT`
-- `MYSQL_DATABASE`
-- `MYSQL_USERNAME`
-- `MYSQL_PASSWORD`
-- `MYSQL_SERVICE_NAME`
-- `REDIS_HOST`
-- `REDIS_PORT`
-- `REDIS_PASSWORD`
-- `REDIS_SERVICE_NAME`
-- `JWT_SECRET`
-- `JWT_EXPIRE`
-- `GRPC_SERVER_PORT`
 
 ## 本地启动
 
@@ -154,10 +137,7 @@ sh ./mvnw -pl auth-center-bootstrap -am spring-boot:run -Dspring-boot.run.profil
 
 - [`auth-center-bootstrap/src/main/java/com/example/authcenter/AuthCenterApplication.java`](./auth-center-bootstrap/src/main/java/com/example/authcenter/AuthCenterApplication.java)
 
-默认端口：
-
-- HTTP：`dev` 为 `8081`，`prod` 为 `8080`
-- gRPC：`9090`
+服务端口等运行参数建议统一维护在 Consul Config 中。
 
 ## Docker 部署
 
@@ -175,20 +155,16 @@ sh ./mvnw -pl auth-center-bootstrap -am clean package -DskipTests
 再通过 Docker Compose 启动：
 
 ```bash
-export MYSQL_HOST=你的数据库地址
-export MYSQL_USERNAME=你的数据库用户名
-export MYSQL_PASSWORD=你的数据库密码
-export REDIS_HOST=你的 Redis 地址
-export JWT_SECRET=你的 JWT 密钥
+export CONSUL_HOST=你的 Consul 地址
 docker compose up -d --build
 ```
 
 说明：
 
 - `docker-compose.yml` 只启动应用容器本身
-- MySQL 和 Redis 需要在 Compose 外部提前准备好
-- `CONSUL_HOST` 和 `HOST_IP` 必须显式提供；缺失时应直接暴露配置错误
-- `HOST_IP` 必须配置成 Consul 可访问到的容器宿主机或容器出口地址
+- MySQL、Redis 的服务注册地址应在 Consul 中可发现
+- 账号密码、JWT、端口等业务配置应在 Consul Config 中提前准备好
+- 本地只需要保证应用能连到 Consul
 - 当前容器暴露端口为 `8080` 和 `9090`
 
 ## 测试
@@ -346,6 +322,6 @@ feat: 新增密码修改接口
 
 ## 当前注意点
 
-- `dev` 环境依赖外部 Consul、MySQL、Redis，仓库内默认地址更偏向局域网开发环境
-- `prod` profile 会接入并注册到 Consul，部署时需要显式提供 `CONSUL_HOST` 和可被 Consul 回连的 `HOST_IP`
+- `dev` 和 `prod` 现在都依赖外部 Consul，地址走服务发现，业务配置走 Consul Config
+- `prod` profile 会注册到 Consul，因此与实例注册地址相关的配置也应由 Consul 配置中心统一管理
 - 仓库同时维护中英文两份 README，后续功能变更时需要同步更新

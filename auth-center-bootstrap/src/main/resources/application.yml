@@ -4,7 +4,7 @@ spring:
   profiles:
     default: dev
   config:
-    import: "optional:consul:"
+    import: "optional:consul:${CONSUL_HOST:192.168.31.169}:${CONSUL_PORT:8500}/config"
   cloud:
     consul:
       host: ${CONSUL_HOST:192.168.31.169}
@@ -12,9 +12,6 @@ spring:
       config:
         enabled: true
         format: YAML
-        prefixes: config
-        default-context: application
-        profile-separator: "-"
         data-key: data
         watch:
           enabled: true
@@ -27,15 +24,12 @@ spring:
           grpc-port: ${grpc.server.port}
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:auth}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:123456}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-      timeout: 5000
+      timeout: ${REDIS_TIMEOUT:5000}
 
 app:
   backend-discovery:
@@ -47,18 +41,9 @@ app:
     redis:
       service-name: ${REDIS_SERVICE_NAME:redis-proxy-service}
 
-grpc:
-  server:
-    enabled: true
-    port: ${GRPC_SERVER_PORT:9090}
-
 mybatis:
   type-aliases-package: com.example.authcenter.infra.identity.po
   mapper-locations: classpath*:mapper/*.xml
-
-jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-your-256-bit-secret}
-  expire: ${JWT_EXPIRE:3600000}
 
 logging:
   level:

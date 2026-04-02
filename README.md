@@ -76,21 +76,18 @@ The default local profile is `dev`, defined by Spring Boot startup conventions i
 
 This profile:
 
-- runs HTTP on `8081`
 - enables Consul Config and Consul Discovery
-- uses Consul for configuration and backend service discovery, but does not register the current service instance
-- enables backend service discovery for MySQL and Redis
-- exposes gRPC on `9090`
+- only requires local Consul connection settings at startup
+- resolves MySQL and Redis addresses through service discovery
+- reads credentials, JWT, ports, and other runtime configuration from Consul Config
+- does not register the current service instance
 
 Default values in the repository:
 
 - `CONSUL_HOST=192.168.31.169`
 - `CONSUL_PORT=8500`
-- `HOST_IP=192.168.31.50`
-- `MYSQL_SERVICE_NAME=mysql-proxy-service`
-- `MYSQL_DATABASE=auth`
-- `REDIS_SERVICE_NAME=redis-proxy-service`
-- `GRPC_SERVER_PORT=9090`
+
+The application now reads YAML configuration from the fixed Consul KV path `config/data`.
 
 ### `test`
 
@@ -112,28 +109,14 @@ This profile:
 
 - enables Consul Config and Consul Discovery
 - registers the container instance into Consul
-- resolves MySQL and Redis through Consul and overrides direct connection properties
-- runs HTTP on `8080`
-- exposes gRPC on `9090`
+- only requires local Consul connection settings at startup
+- resolves MySQL and Redis addresses through service discovery
+- reads credentials, JWT, ports, and other runtime configuration from Consul Config
 
 Important environment variables:
 
 - `CONSUL_HOST`
 - `CONSUL_PORT`
-- `HOST_IP`
-- `MYSQL_HOST`
-- `MYSQL_PORT`
-- `MYSQL_DATABASE`
-- `MYSQL_USERNAME`
-- `MYSQL_PASSWORD`
-- `MYSQL_SERVICE_NAME`
-- `REDIS_HOST`
-- `REDIS_PORT`
-- `REDIS_PASSWORD`
-- `REDIS_SERVICE_NAME`
-- `JWT_SECRET`
-- `JWT_EXPIRE`
-- `GRPC_SERVER_PORT`
 
 ## Run Locally
 
@@ -154,10 +137,7 @@ Main class:
 
 - [`auth-center-bootstrap/src/main/java/com/example/authcenter/AuthCenterApplication.java`](./auth-center-bootstrap/src/main/java/com/example/authcenter/AuthCenterApplication.java)
 
-Default ports:
-
-- HTTP: `8081` in `dev`, `8080` in `prod`
-- gRPC: `9090`
+Ports and other runtime settings should now be managed in Consul Config.
 
 ## Docker Deployment
 
@@ -175,20 +155,16 @@ sh ./mvnw -pl auth-center-bootstrap -am clean package -DskipTests
 Then start with Docker Compose:
 
 ```bash
-export MYSQL_HOST=your-mysql-host
-export MYSQL_USERNAME=your-mysql-user
-export MYSQL_PASSWORD=your-mysql-password
-export REDIS_HOST=your-redis-host
-export JWT_SECRET=your-jwt-secret
+export CONSUL_HOST=your-consul-host
 docker compose up -d --build
 ```
 
 Notes:
 
 - `docker-compose.yml` only starts the application container
-- MySQL and Redis must already exist outside this compose file
-- `CONSUL_HOST` and `HOST_IP` must be provided explicitly; missing values should fail fast
-- `HOST_IP` must be reachable by Consul health checks
+- MySQL and Redis service registrations should be discoverable in Consul
+- credentials, JWT, ports, and other runtime properties should be prepared in Consul Config
+- locally, the application only needs to be able to reach Consul
 - the container exposes `8080` and `9090`
 
 ## Test
@@ -346,6 +322,6 @@ feat: 新增密码修改接口
 
 ## Current Caveats
 
-- `dev` depends on external Consul, MySQL, and Redis services, and the default addresses in the repo are LAN-specific
-- the `prod` profile integrates with Consul, so deployment must provide both `CONSUL_HOST` and a Consul-reachable `HOST_IP`
+- `dev` and `prod` now both depend on external Consul, with addresses coming from service discovery and runtime properties from Consul Config
+- the `prod` profile registers to Consul, so instance registration settings should also be managed through Consul Config
 - the repository contains both English and Chinese README files and they should be kept in sync when capabilities change
