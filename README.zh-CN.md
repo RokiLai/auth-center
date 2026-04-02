@@ -229,6 +229,43 @@ sh ./mvnw -pl auth-center-domain test
 - [`auth-center-interfaces/src/main/java/com/example/authcenter/controller/IdentityController.java`](./auth-center-interfaces/src/main/java/com/example/authcenter/controller/IdentityController.java)
 - [`auth-center-interfaces/src/main/java/com/example/authcenter/controller/ConsulConfigDebugController.java`](./auth-center-interfaces/src/main/java/com/example/authcenter/controller/ConsulConfigDebugController.java)
 
+### OpenAPI / Swagger
+
+启动应用后可访问：
+
+- Swagger UI：`/swagger-ui.html`
+- OpenAPI JSON：`/v3/api-docs`
+
+默认本地地址示例：
+
+- `http://localhost:8080/swagger-ui.html`
+- `http://localhost:8080/v3/api-docs`
+
+Swagger UI 已开启以下默认行为：
+
+- 标签与接口按名称排序
+- 默认折叠接口列表
+- 显示请求耗时
+- 持久化保存 Bearer Token，便于重复调试受保护接口
+
+鉴权方式：
+
+- 先调用 `POST /auth/login`
+- 从响应头获取 `Authorization: Bearer <token>`
+- 在 Swagger UI 右上角 `Authorize` 中填入完整值，或直接在后续请求头中携带
+
+常见错误码：
+
+- `1001001`：用户名已存在
+- `1001005`：旧密码错误
+- `1001101`：用户名或密码错误
+- `1001102`：缺少 Token，请先登录
+- `1001103`：Token 已过期，请重新登录
+- `1001104`：Token 无效
+- `9001101`：请求参数校验失败
+
+接口文档中的请求体、响应体、错误结构和响应头说明已与 OpenAPI 文档同步，可直接在 Swagger UI 中查看和调试。
+
 主要接口如下。
 
 ### 注册

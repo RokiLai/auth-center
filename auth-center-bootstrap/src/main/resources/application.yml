@@ -57,6 +57,17 @@ logging:
     org.apache.ibatis: info
     org.springframework.cloud.consul: info
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    doc-expansion: none
+    operations-sorter: alpha
+    persist-authorization: true
+    tags-sorter: alpha
+
 roki:
   exception:
     error-code:
