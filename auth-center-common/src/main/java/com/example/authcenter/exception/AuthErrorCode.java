@@ -21,6 +21,9 @@ public enum AuthErrorCode implements DeclarativeErrorCode {
     @ErrorCodeMeta(detailCode = "005", message = "旧密码错误")
     OLD_PASSWORD_INCORRECT,
 
+    @ErrorCodeMeta(detailCode = "006", message = "邮箱已存在")
+    EMAIL_ALREADY_EXISTS,
+
     @ErrorCodeMeta(detailCode = "101", message = "用户名或密码错误")
     LOGIN_FAILED,
 

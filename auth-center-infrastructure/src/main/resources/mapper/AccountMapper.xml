@@ -23,6 +23,12 @@
         WHERE username = #{username}
     </select>
 
+    <select id="findByEmail" resultMap="AccountPOResultMap">
+        SELECT id, username, password, email
+        FROM account
+        WHERE email = #{email}
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO account (username, password, email)
         VALUES (#{username}, #{password}, #{email})

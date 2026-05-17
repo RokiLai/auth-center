@@ -51,7 +51,7 @@
 - 可访问 GitHub Packages 的认证信息
 - 在 `dev` 环境下可用的 Consul、MySQL、Redis
 
-项目依赖 GitHub Packages 上的私有包 `com.roki:exception-spring-boot-starter:2.0.1`。
+项目依赖 GitHub Packages 上的私有包 `com.roki:exception-spring-boot-starter:2.0.2`。
 
 最小可用的 `~/.m2/settings.xml` 示例：
 

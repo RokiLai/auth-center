@@ -51,7 +51,7 @@ Before running locally, prepare:
 - Access to GitHub Packages for private dependency download
 - For the `dev` profile: Consul, MySQL, and Redis
 
-The project depends on the private package `com.roki:exception-spring-boot-starter:2.0.1`.
+The project depends on the private package `com.roki:exception-spring-boot-starter:2.0.2`.
 
 Minimal `~/.m2/settings.xml`:
 

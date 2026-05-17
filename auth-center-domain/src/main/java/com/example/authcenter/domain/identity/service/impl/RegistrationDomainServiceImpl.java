@@ -6,6 +6,7 @@ import com.example.authcenter.domain.identity.model.valueobject.RawPassword;
 import com.example.authcenter.domain.identity.repository.IdentityAccountRepository;
 import com.example.authcenter.domain.identity.service.PasswordHasher;
 import com.example.authcenter.domain.identity.service.RegistrationDomainService;
+import com.example.authcenter.exception.auth.EmailAlreadyExistsException;
 import com.example.authcenter.exception.auth.UsernameAlreadyExistsException;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,9 @@ public class RegistrationDomainServiceImpl implements RegistrationDomainService 
     public IdentityAccount register(String username, String password, String email) {
         if (identityAccountRepository.existsByUsername(username)) {
             throw new UsernameAlreadyExistsException();
+        }
+        if (identityAccountRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException();
         }
         return identityAccountFactory.register(
                 username,

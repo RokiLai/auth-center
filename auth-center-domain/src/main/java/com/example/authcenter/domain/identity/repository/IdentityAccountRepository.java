@@ -6,6 +6,8 @@ public interface IdentityAccountRepository {
 
     boolean existsByUsername(String username);
 
+    boolean existsByEmail(String email);
+
     IdentityAccount findById(Long id);
 
     IdentityAccount findByUsername(String username);

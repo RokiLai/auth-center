@@ -16,6 +16,13 @@ public interface AccountMapper {
     AccountPO findByUsername(@Param("username") String username);
 
     /**
+     * 根据邮箱查询 AccountPO
+     * @param email 邮箱
+     * @return AccountPO 对象，如果不存在则返回 null
+     */
+    AccountPO findByEmail(@Param("email") String email);
+
+    /**
      * 插入新的 AccountPO
      * @param accountPO 待插入的 AccountPO
      * @return 影响的行数

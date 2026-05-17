@@ -5,5 +5,7 @@ CREATE TABLE account (
     username VARCHAR(255),
     password VARCHAR(255),
     email VARCHAR(255),
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE INDEX uk_username (username),
+    UNIQUE INDEX uk_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

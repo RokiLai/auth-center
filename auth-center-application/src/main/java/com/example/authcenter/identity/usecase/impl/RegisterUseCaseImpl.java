@@ -6,6 +6,7 @@ import com.example.authcenter.domain.identity.service.RegistrationDomainService;
 import com.example.authcenter.identity.usecase.RegisterUseCase;
 import com.example.authcenter.identity.usecase.command.RegisterCommand;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RegisterUseCaseImpl implements RegisterUseCase {
@@ -20,6 +21,7 @@ public class RegisterUseCaseImpl implements RegisterUseCase {
     }
 
     @Override
+    @Transactional
     public boolean register(RegisterCommand command) {
         IdentityAccount account = registrationDomainService.register(
                 command.username(),

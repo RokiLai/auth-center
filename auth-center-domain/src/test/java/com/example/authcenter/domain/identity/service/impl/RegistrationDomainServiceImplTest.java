@@ -7,6 +7,7 @@ import com.example.authcenter.domain.identity.model.valueobject.RawPassword;
 import com.example.authcenter.domain.identity.repository.IdentityAccountRepository;
 import com.example.authcenter.domain.identity.service.PasswordHasher;
 import com.example.authcenter.domain.identity.service.RegistrationDomainService;
+import com.example.authcenter.exception.auth.EmailAlreadyExistsException;
 import com.example.authcenter.exception.auth.UsernameAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +42,9 @@ class RegistrationDomainServiceImplTest {
     private IdentityAccountRepository identityAccountRepository;
 
     @Test
-    void registerShouldCreateAccountWhenUsernameIsAvailable() {
+    void registerShouldCreateAccountWhenUsernameAndEmailAreAvailable() {
         when(identityAccountRepository.existsByUsername("new-user")).thenReturn(false);
+        when(identityAccountRepository.existsByEmail("new-user@example.com")).thenReturn(false);
 
         IdentityAccount account = registrationDomainService.register("new-user", "123456", "new-user@example.com");
 
@@ -57,6 +59,15 @@ class RegistrationDomainServiceImplTest {
 
         assertThatThrownBy(() -> registrationDomainService.register("new-user", "123456", "new-user@example.com"))
                 .isInstanceOf(UsernameAlreadyExistsException.class);
+    }
+
+    @Test
+    void registerShouldRejectDuplicatedEmail() {
+        when(identityAccountRepository.existsByUsername("new-user")).thenReturn(false);
+        when(identityAccountRepository.existsByEmail("new-user@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> registrationDomainService.register("new-user", "123456", "new-user@example.com"))
+                .isInstanceOf(EmailAlreadyExistsException.class);
     }
 
     @SpringBootConfiguration
